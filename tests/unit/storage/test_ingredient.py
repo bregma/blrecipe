@@ -16,4 +16,4 @@ class TestIngredient(TestCase):
         Verify that a Spark Ingredient exists in the table.
         """
         session = Database().session()
-        self.assertTrue(session.query(exists().where(Ingredient.display_name=='Spark')).scalar())
+        self.assertTrue(session.query(exists().where(Ingredient.display_name == 'Spark')).scalar())

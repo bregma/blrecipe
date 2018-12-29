@@ -16,4 +16,4 @@ class TestQuantity(TestCase):
         Verify that the Single quantity exists in the table.
         """
         session = Database().session()
-        self.assertTrue(session.query(exists().where(Quantity.display_name=='Single')).scalar())
+        self.assertTrue(session.query(exists().where(Quantity.display_name == 'Single')).scalar())

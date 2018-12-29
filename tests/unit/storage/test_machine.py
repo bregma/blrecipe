@@ -16,4 +16,4 @@ class TestMachine(TestCase):
         Verify that a Workbench Machine exists in the table.
         """
         session = Database().session()
-        self.assertTrue(session.query(exists().where(Machine.display_name=='Workbench')).scalar())
+        self.assertTrue(session.query(exists().where(Machine.display_name == 'Workbench')).scalar())
