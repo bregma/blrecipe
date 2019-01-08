@@ -2,7 +2,6 @@
 Test the Quantity storage model
 """
 from unittest import TestCase
-from sqlalchemy import exists
 from blrecipe.storage import Database, Quantity
 
 
@@ -16,4 +15,5 @@ class TestQuantity(TestCase):
         Verify that the Single quantity exists in the table.
         """
         session = Database().session()
-        self.assertTrue(session.query(exists().where(Quantity.display_name == 'Single')).scalar())
+        query = session.query(Quantity).filter_by(string_id='GUI_MACHINE_CRAFT_TAB_SINGLE').first()
+        self.assertTrue(query.string_id == 'GUI_MACHINE_CRAFT_TAB_SINGLE')

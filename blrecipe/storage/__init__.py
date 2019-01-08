@@ -4,9 +4,17 @@ blrecipe storage subpackage
 This module provides a persistent data store of the various recipes for Boundless.
 """
 from .database import Database
-from .ingredient import Ingredient
+from .item import Item
 from .machine import Machine
 from .quantity import Quantity
 from .recipe import Recipe
+from .recipe_ingredient import RecipeIngredient
+from .translation import Translation
 
-__all__ = ['Database', 'Ingredient', 'Machine', 'Quantity', 'Recipe']
+__all__ = ['Database',
+           'Item',
+           'Machine',
+           'Quantity',
+           'Recipe',
+           'RecipeIngredient',
+           'Translation']

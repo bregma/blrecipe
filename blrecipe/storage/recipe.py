@@ -22,8 +22,11 @@ class Recipe(BaseObject):  # pylint: disable=too-few-public-methods
     attribute = Column(String(32))
     attribute_level = Column(Integer)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, json_data=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if json_data is not None:
+            print('Recipe: json_data="{}"'.format(json_data))
+            self.display_name = json_data['outputItem']
 
     def __repr__(self):
         return self.display_name

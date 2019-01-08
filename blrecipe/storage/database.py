@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 BaseObject = declarative_base()  # pylint: disable=invalid-name
 
 # Global factory object for creating sessions
-_SessionMaker = sessionmaker()
+Session = sessionmaker()  # pylint: disable=invalid-name
 
 
 class Database(object):  #pylint: disable=too-few-public-methods
@@ -18,6 +18,7 @@ class Database(object):  #pylint: disable=too-few-public-methods
     """
 
     def __init__(self):
+#        self._engine = create_engine("sqlite:///blrecipe.db", echo=True)
         self._engine = create_engine("sqlite:///blrecipe.db")
         self._connection = self._engine.connect()
         self._ensure_db_exists()
@@ -31,7 +32,7 @@ class Database(object):  #pylint: disable=too-few-public-methods
         """
         Get a database session
         """
-        return _SessionMaker(bind=self._connection)
+        return Session(bind=self._connection)
 
     def close(self):
         """

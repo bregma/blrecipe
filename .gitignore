@@ -1,3 +1,4 @@
+blrecipe.db
 *.egg-info
 __pycache__
 .vscode
