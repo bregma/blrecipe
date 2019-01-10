@@ -2,7 +2,8 @@
 Items
 """
 
-from sqlalchemy import Column, Integer, String, event, DDL
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 from .database import BaseObject
 
 
@@ -13,17 +14,14 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
 
     __tablename__ = 'Item'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    string_id = Column(String(32), unique=True, nullable=False)
+    name = Column(String(32), unique=True, nullable=False)
+    string_id = Column(String(64), ForeignKey('Translation.string_id'))
+    display_name = relationship('Translation')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, string_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = name
+        self.string_id = string_id
 
     def __repr__(self):
-        return self.string_id
-
-event.listen(Item.__table__, 'after_create',  # pylint: disable=no-member
-             DDL("""INSERT INTO Item (string_id)
-                        VALUES ('Spark'),
-                               ('Power'),
-                               ('Wear'),
-                               ('Time');"""))
+        return '<Item {}>'.format(self.name)

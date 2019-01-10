@@ -15,7 +15,7 @@ class Machine(BaseObject):  # pylint: disable=too-few-public-methods
     __tablename__ = 'Machine'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(16), nullable=False)
-    string_id = Column(String(8), ForeignKey('Translation.string_id'), nullable=False)
+    string_id = Column(String(64), ForeignKey('Translation.string_id'), nullable=False)
     display_name = relationship('Translation')
 
     def __init__(self, name, string_id, *args, **kwargs):

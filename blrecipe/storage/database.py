@@ -18,14 +18,14 @@ class Database(object):  #pylint: disable=too-few-public-methods
     """
 
     def __init__(self):
-#        self._engine = create_engine("sqlite:///blrecipe.db", echo=True)
+#        self._engine = create_engine("sqlite:///blrecipe.db", echo="debug")
         self._engine = create_engine("sqlite:///blrecipe.db")
         self._connection = self._engine.connect()
         self._ensure_db_exists()
 
     def _ensure_db_exists(self):
         insp = inspect(self._engine)
-        if 'Quantity' not in insp.get_table_names():
+        if 'Machine' not in insp.get_table_names():
             BaseObject.metadata.create_all(self._engine)
 
     def session(self):

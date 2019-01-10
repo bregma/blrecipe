@@ -16,4 +16,5 @@ class TestItem(TestCase):
         Verify that a Spark Item exists in the table.
         """
         session = Database().session()
+        print('==smw !!! <==wms')
         self.assertTrue(session.query(exists().where(Item.string_id == 'Spark')).scalar())

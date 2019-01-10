@@ -14,7 +14,7 @@ class Translation(BaseObject):  # pylint: disable=too-few-public-methods
     __table_args__ = (UniqueConstraint('lang', 'string_id'),)
     id = Column(Integer, primary_key=True, autoincrement=True)
     lang = Column(String(2), nullable=False)
-    string_id = Column(String(255), nullable=False)
+    string_id = Column(String(64), nullable=False)
     value = Column(String(255), nullable=False)
 
     def __init__(self, string_id, lang=None, value=None, *args, **kwargs):
