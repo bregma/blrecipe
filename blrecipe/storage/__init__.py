@@ -8,7 +8,8 @@ from .item import Item
 from .machine import Machine
 from .quantity import Quantity
 from .recipe import Recipe
-from .recipe_ingredient import RecipeIngredient
+from .recipe_ingredient import Ingredient
+from .recipe_quantity import RecipeQuantity
 from .translation import Translation
 
 __all__ = ['Database',
@@ -16,5 +17,6 @@ __all__ = ['Database',
            'Machine',
            'Quantity',
            'Recipe',
-           'RecipeIngredient',
+           'Ingredient',
+           'RecipeQuantity',
            'Translation']

@@ -13,22 +13,29 @@ class Quantity(BaseObject):  # pylint: disable=too-few-public-methods
     """
 
     __tablename__ = 'Quantity'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     string_id = Column(String(64), ForeignKey('Translation.string_id'))
     display_name = relationship('Translation')
 
-    def __init__(self, string_id, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, id, string_id, **kwargs):
+        self.id = id
         self.string_id = string_id
 
     def __repr__(self):
-        return '<Quantity {}>'.format(self.id)
+        return '<Quantity {}>'.format(self.name)
+
+    @property
+    def name(self):
+        """
+        Get the (localized) display name of the quantity.
+        """
+        return self.display_name.value
 
 
 @event.listens_for(Quantity.__table__, 'after_create')
 def _default_quantities(target, connection, *args, **kwargs):
     session = Session(bind=connection)
-    session.add(Quantity('GUI_MACHINE_CRAFT_TAB_SINGLE'))
-    session.add(Quantity('GUI_MACHINE_CRAFT_TAB_BULK'))
-    session.add(Quantity('GUI_MACHINE_CRAFT_TAB_MASS'))
+    session.add(Quantity(0, 'GUI_MACHINE_CRAFT_TAB_SINGLE'))
+    session.add(Quantity(1, 'GUI_MACHINE_CRAFT_TAB_BULK'))
+    session.add(Quantity(2, 'GUI_MACHINE_CRAFT_TAB_MASS'))
     session.commit()

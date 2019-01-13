@@ -2,8 +2,7 @@
 Test the Item storage model
 """
 from unittest import TestCase
-from sqlalchemy import exists
-from blrecipe.storage import Database, Item
+from blrecipe.storage import Item
 
 
 class TestItem(TestCase):
@@ -15,6 +14,5 @@ class TestItem(TestCase):
         """
         Verify that a Spark Item exists in the table.
         """
-        session = Database().session()
-        print('==smw !!! <==wms')
-        self.assertTrue(session.query(exists().where(Item.string_id == 'Spark')).scalar())
+        item = Item('HIPPOPOTAMUS', 'ITEM_TYPE_RIVER_HORSE')
+        self.assertEqual(item.name, 'HIPPOPOTAMUS')

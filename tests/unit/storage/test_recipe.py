@@ -14,8 +14,9 @@ class TestRecipe(TestCase):
         """
         Validate the basic class constructor.
         """
-        test_display_name = "test"
+        test_experience = 11
 
-        recipe = Recipe(display_name=test_display_name)
+        recipe = Recipe(experience=test_experience)
 
-        self.assertEqual(recipe.display_name, test_display_name)
+        self.assertEqual(recipe.experience, test_experience)
+        self.assertEqual(recipe.power, 0)
