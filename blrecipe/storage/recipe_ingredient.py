@@ -29,4 +29,3 @@ class Ingredient(BaseObject):  # pylint: disable=too-few-public-methods
                         self.quantity.display_name,
                         self.item.name,
                         self.amount))
- 

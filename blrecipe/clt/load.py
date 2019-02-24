@@ -7,6 +7,7 @@ import msgpack
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import Recipe, RecipeQuantity, Machine, Ingredient
 
+
 def add_parser(subparsers):
     """
     Add the CLI argument parser for this submodule
@@ -29,8 +30,8 @@ def msgpack_transform(keys, data):
     elif isinstance(data, list):
         return [msgpack_transform(keys, element) for element in data]
     elif isinstance(data, dict):
-        return {keys[int(key)].decode('utf-8'): msgpack_transform(keys, value) \
-                    for key, value in data.items()}
+        return {keys[int(key)].decode('utf-8'): msgpack_transform(keys, value)
+                for key, value in data.items()}
     return data
 
 
@@ -97,7 +98,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         Load the compiled items JSON
         """
         itemlist = unpack(filename)
-        for key, item in itemlist.items():
+        for _, item in itemlist.items():
             self._session.add(Item(name=item['name'], string_id=item['stringID']))
         self._session.commit()
 
@@ -130,15 +131,17 @@ class Loader(object):  # pylint: disable=too-few-public-methods
 
             inputs = recipe['inputs']
             if inputs:
-                for input in inputs:
-                    item = self._session.query(Item).filter_by(name=input['inputItem']).first()
+                for recipe_input in inputs:
+                    item = self._session.query(Item)\
+                            .filter_by(name=recipe_input['inputItem'])\
+                            .first()
                     print('  "{}"'.format(item))
                     for i in range(len(outputq)):
                         ringr = Ingredient()
                         ringr.recipe = new_recipe
                         ringr.item = item
                         ringr.quantity = self.quantities[i]
-                        ringr.amount = input['inputQuantity'][i]
+                        ringr.amount = recipe_input['inputQuantity'][i]
 
             self._session.commit()
             print('{}'.format(new_recipe))

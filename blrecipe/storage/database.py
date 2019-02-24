@@ -12,7 +12,7 @@ BaseObject = declarative_base()  # pylint: disable=invalid-name
 Session = sessionmaker()  # pylint: disable=invalid-name
 
 
-class Database(object):  #pylint: disable=too-few-public-methods
+class Database(object):  # pylint: disable=too-few-public-methods
     """
     Encapsulate the RDBMS used as a persistent store
     """

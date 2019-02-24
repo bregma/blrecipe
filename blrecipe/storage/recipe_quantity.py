@@ -28,4 +28,3 @@ class RecipeQuantity(BaseObject):  # pylint: disable=too-few-public-methods
         return ('<RecipeQuantity recipe:{} quantity:{}>'
                 .format(self.recipe.item.name,
                         self.quantity.display_name))
- 
