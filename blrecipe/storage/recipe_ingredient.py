@@ -3,7 +3,7 @@ Recipe Ingredients
 
 The recipe_quantity table relates Recipes and Ingredients by Quantity
 """
-from sqlalchemy import Table, Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from .database import BaseObject
 

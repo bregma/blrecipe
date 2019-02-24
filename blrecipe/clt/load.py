@@ -26,8 +26,6 @@ def msgpack_transform(keys, data):
     """
     if isinstance(data, bytes):
         return data.decode('utf-8')
-    elif isinstance(data, str):
-        return str
     elif isinstance(data, list):
         return [msgpack_transform(keys, element) for element in data]
     elif isinstance(data, dict):
@@ -45,7 +43,11 @@ def unpack(filename):
         return msgpack_transform(unpacked[1], unpacked[0])
 
 
-class Loader(object):
+def _handcraft_from_recipe(recipe):
+    return recipe['canHandCraft'] if 'canHandCraft' in recipe else None
+
+
+class Loader(object):  # pylint: disable=too-few-public-methods
     """
     Wrap the stateful loading of game files into the database.
     """
@@ -109,14 +111,10 @@ class Loader(object):
             output_item = recipe['outputItem']
             item = self._session.query(Item).filter_by(name=output_item).first()
 
-            experience = recipe['craftXP'] if 'craftXP' in recipe else None
-            heat = recipe['heat'] if 'heat' in recipe else None
-            power = recipe['power'] if 'power' in recipe else None
-            handcraftable = recipe['canHandCraft'] if 'canHandCraft' in recipe else None
-            new_recipe = Recipe(experience=experience,
-                                heat=heat,
-                                power=power,
-                                handcraftable=handcraftable)
+            new_recipe = Recipe(experience=recipe['craftXP'] if 'craftXP' in recipe else None,
+                                heat=recipe['heat'] if 'heat' in recipe else None,
+                                power=recipe['power'] if 'power' in recipe else None,
+                                handcraftable=_handcraft_from_recipe(recipe))
             if 'machine' in recipe:
                 new_recipe.machine = self.machines[recipe['machine']]
             item.recipes.append(new_recipe)

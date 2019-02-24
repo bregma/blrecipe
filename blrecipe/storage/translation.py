@@ -17,7 +17,7 @@ class Translation(BaseObject):  # pylint: disable=too-few-public-methods
     string_id = Column(String(64), nullable=False)
     value = Column(String(255), nullable=False)
 
-    def __init__(self, string_id, lang=None, value=None, *args, **kwargs):
+    def __init__(self, string_id, lang=None, value=None):
         self.lang = 'en' if lang is None else lang
         self.string_id = string_id
         self.value = string_id if value is None else value

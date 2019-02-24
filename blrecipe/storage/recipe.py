@@ -34,6 +34,7 @@ class Recipe(BaseObject):  # pylint: disable=too-few-public-methods
                  handcraftable=None,
                  power=None,
                  **kwargs):
+        super().__init__(**kwargs)
         self.experience = experience if experience else 0
         self.heat = heat if heat else 0
         self.power = power if power else 0

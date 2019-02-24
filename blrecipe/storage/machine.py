@@ -28,7 +28,7 @@ class Machine(BaseObject):  # pylint: disable=too-few-public-methods
 
 
 @event.listens_for(Machine.__table__, 'after_create')
-def _default_quantities(target, connection, **kw):
+def _default_quantities(target, connection, **kw):  # pylint: disable=unused-argument
     session = Session(bind=connection)
     session.add(Machine('CRAFTING_TABLE', 'CRAFTING_TABLE'))
     session.add(Machine('WORKBENCH', 'GUI_MACHINE_WORKBENCH_TITLE'))

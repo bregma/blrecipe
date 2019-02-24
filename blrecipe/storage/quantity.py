@@ -13,12 +13,13 @@ class Quantity(BaseObject):  # pylint: disable=too-few-public-methods
     """
 
     __tablename__ = 'Quantity'
-    id = Column(Integer, primary_key=True)
+    quantity_id = Column('id', Integer, primary_key=True)
     string_id = Column(String(64), ForeignKey('Translation.string_id'))
     display_name = relationship('Translation')
 
-    def __init__(self, id, string_id, **kwargs):
-        self.id = id
+    def __init__(self, quantity_id, string_id, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.quantity_id = quantity_id
         self.string_id = string_id
 
     def __repr__(self):
@@ -33,7 +34,7 @@ class Quantity(BaseObject):  # pylint: disable=too-few-public-methods
 
 
 @event.listens_for(Quantity.__table__, 'after_create')
-def _default_quantities(target, connection, *args, **kwargs):
+def _default_quantities(target, connection, *args, **kwargs):  # pylint: disable=unused-argument
     session = Session(bind=connection)
     session.add(Quantity(0, 'GUI_MACHINE_CRAFT_TAB_SINGLE'))
     session.add(Quantity(1, 'GUI_MACHINE_CRAFT_TAB_BULK'))

@@ -12,9 +12,15 @@ enable=F,E,
     bad-format-string,
     anomalous-backslash-in-string,
     bad-open-mode
+disable=locally-disabled
 
 [BASIC]
+good-names=i,j,k,ex,id,Run,_
 class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{1,30}|(__.*__))$
+
+[SIMILARITIES]
+min-similarity-lines=6
+
 
 [TYPECHECK]
 generated-members=__table__
