@@ -16,7 +16,7 @@ class Machine(BaseObject):  # pylint: disable=too-few-public-methods
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(16), nullable=False)
     string_id = Column(String(64), ForeignKey('Translation.string_id'), nullable=False)
-    display_name = relationship('Translation')
+    translation = relationship('Translation')
 
     def __init__(self, name, string_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,6 +26,10 @@ class Machine(BaseObject):  # pylint: disable=too-few-public-methods
     def __repr__(self):
         return self.string_id
 
+    @property
+    def display_name(self):
+        """Get the (localized) display name of the machine."""
+        return self.translation.value
 
 @event.listens_for(Machine.__table__, 'after_create')
 def _default_quantities(target, connection, **kw):  # pylint: disable=unused-argument

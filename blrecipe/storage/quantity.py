@@ -30,7 +30,7 @@ class Quantity(BaseObject):  # pylint: disable=too-few-public-methods
         """
         Get the (localized) display name of the quantity.
         """
-        return self.display_name.value
+        return self.display_name.value.lower()
 
 
 @event.listens_for(Quantity.__table__, 'after_create')

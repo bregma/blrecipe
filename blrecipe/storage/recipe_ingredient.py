@@ -23,6 +23,11 @@ class Ingredient(BaseObject):  # pylint: disable=too-few-public-methods
     quantity = relationship('Quantity')
     item = relationship('Item')
 
+    @property
+    def display_name(self):
+        """Get the (localized) display name of the ingredient."""
+        return self.item.display_name
+
     def __repr__(self):
         return ('<Ingredient recipe:{} item:{} quantity:{} amount:{}>'
                 .format(self.recipe.item.name,
