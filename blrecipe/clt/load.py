@@ -98,8 +98,8 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         Load the compiled items JSON
         """
         itemlist = unpack(filename)
-        for _, item in itemlist.items():
-            self._session.add(Item(name=item['name'], string_id=item['stringID']))
+        for key, item in itemlist.items():
+            self._session.add(Item(id=key, name=item['name'], string_id=item['stringID']))
         self._session.commit()
 
     def _load_recipes(self, filename):
@@ -110,7 +110,10 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         recipes = contents['recipes']
         for recipe in recipes:
             output_item = recipe['outputItem']
-            item = self._session.query(Item).filter_by(name=output_item).first()
+            item = self._session.query(Item).filter_by(id=output_item).first()
+            if item is None:
+                print('item "{}" not found'.format(output_item))
+                continue
 
             new_recipe = Recipe(experience=recipe['craftXP'] if 'craftXP' in recipe else None,
                                 heat=recipe['heat'] if 'heat' in recipe else None,
@@ -120,28 +123,46 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                 new_recipe.machine = self.machines[recipe['machine']]
             item.recipes.append(new_recipe)
 
-            outputq = recipe['outputQuantity']
-            for i in range(len(outputq)):
+            for i, amount in enumerate(recipe['outputQuantity']):
                 rquant = RecipeQuantity()
                 rquant.recipe = new_recipe
                 rquant.quantity = self.quantities[i]
                 rquant.spark = recipe['spark'][i]
                 rquant.wear = recipe['wear'][i]
                 rquant.duration = recipe['duration'][i]
+                rquant.produces = amount
 
             inputs = recipe['inputs']
             if inputs:
                 for recipe_input in inputs:
                     item = self._session.query(Item)\
-                            .filter_by(name=recipe_input['inputItem'])\
+                            .filter_by(id=recipe_input['inputItems'][0])\
                             .first()
                     print('  "{}"'.format(item))
-                    for i in range(len(outputq)):
+                    for i, amount in enumerate(recipe_input['inputQuantity']):
                         ringr = Ingredient()
                         ringr.recipe = new_recipe
                         ringr.item = item
                         ringr.quantity = self.quantities[i]
-                        ringr.amount = recipe_input['inputQuantity'][i]
+                        ringr.amount = amount
+
+            try:
+                new_recipe.power = recipe['powerRequired']
+            except KeyError:
+                if self._args.verbose:
+                    print('  item {} missing power'.format(item.name))
+
+            try:
+                prereqs = recipe['prerequisites']
+                if prereqs:
+                    for req in prereqs:
+                        skill = req['attribute'].rpartition(' Level')[0]
+                        level = req['level']
+                        new_recipe.attribute = skill
+                        new_recipe.attribute_level = level
+            except KeyError:
+                if self._args.verbose:
+                    print('  item {} missing prereqs'.format(item.name))
 
             self._session.commit()
             print('{}'.format(new_recipe))

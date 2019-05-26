@@ -20,6 +20,7 @@ class RecipeQuantity(BaseObject):  # pylint: disable=too-few-public-methods
     spark = Column(Integer, nullable=False, default=0)
     wear = Column(Integer, nullable=False, default=0)
     duration = Column(Integer, nullable=False, default=0)
+    produces = Column(Integer, nullable=False, default=0)
 
     recipe = relationship('Recipe', back_populates='quantities')
     quantity = relationship('Quantity')

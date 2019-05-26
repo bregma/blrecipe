@@ -25,6 +25,9 @@ class Quantity(BaseObject):  # pylint: disable=too-few-public-methods
     def __repr__(self):
         return '<Quantity {}>'.format(self.name)
 
+    def __lt__(self, rhs):
+        return self.quantity_id < rhs.quantity_id
+
     @property
     def name(self):
         """
