@@ -10,7 +10,7 @@ from .quantity import Quantity
 from .recipe import Recipe
 from .recipe_ingredient import Ingredient
 from .recipe_quantity import RecipeQuantity
-from .translation import Translation
+from .translation import Translation, i18n
 
 __all__ = ['Database',
            'Item',
@@ -19,4 +19,5 @@ __all__ = ['Database',
            'Recipe',
            'Ingredient',
            'RecipeQuantity',
-           'Translation']
+           'Translation',
+           'i18n',]

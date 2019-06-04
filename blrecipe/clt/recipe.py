@@ -2,7 +2,7 @@
 Submodule to handle printing a recipe
 """
 from sys import exit
-from ..storage import Database, Translation, Item
+from ..storage import Database, Translation, Item, i18n
 
 
 def add_parser(subparser):
@@ -80,25 +80,79 @@ def print_recipe_wiki(recipe):
     print('}}')
 
 
-def print_infobox_wiki(session, item):
+def print_furnace_recipe_wiki(recipe):
+    """
+    Format the furnace recipe for WIKI
+    """
+    print('{{FurnaceRecipe')
+    print('| name = {}'.format(recipe.item.display_name))
+    icount = 1
+    for ingredient in recipe.ingredients:
+        if ingredient.quantity.quantity_id == 0:
+            print("| ingredient{} = {}".format(icount, ingredient.display_name), end=' ')
+            print("| ingredient{} required = {}".format(icount, ingredient.amount))
+            icount += 1
+
+    for quantity in recipe.quantities:
+        if quantity.quantity.quantity_id == 0:
+            if quantity.wear > 0:
+                print('| wear = {} '.format(quantity.wear))
+            if quantity.duration > 0:
+                print('| time = {} '.format(_format_time(quantity.duration)))
+            if quantity.produces:
+                print('| produces = {} '.format(quantity.produces))
+    if recipe.heat > 0:
+        print('| heat = {}'.format(recipe.heat))
+    if recipe.attribute:
+        print('| skill = {}'.format(recipe.attribute), end='')
+        if recipe.attribute_level:
+            print(' | skill level = {}'.format(recipe.attribute_level), end='')
+        print('')
+    print('| machine = {}'.format(recipe.machine.display_name))
+    print('}}')
+
+
+def get_item_info(session, item):
+    """
+    Gets translated information related to the item.
+    """
+    item_info = {}
+
+    item_info['name'] = item.display_name
+
+    class_id = item.string_id + '_SUBTITLE'
+    item_info['class'] = i18n(session, class_id)
+
+    description_id = item.string_id + '_DESCRIPTION'
+    item_info['description'] = i18n(session, description_id)
+    return item_info
+
+
+def print_infobox_wiki(item_info):
     """
     Prints an infobox for the rexipe item.
     """
-    class_id = item.string_id + '_SUBTITLE'
-    description_id = item.string_id + '_DESCRIPTION'
-
-    class_string = session.query(Translation).filter_by(string_id=class_id).first()
-    descr_string = session.query(Translation).filter_by(string_id=description_id).first()
-
     infobox = '{{Infobox\n'
-    infobox += '| name = {}\n'.format(item.display_name)
-    infobox += '| image = {}.png\n'.format(item.display_name)
-    if class_string:
-        infobox += '| class = {}\n'.format(class_string.value)
-    if descr_string:
-        infobox += '| description = {}\n'.format(descr_string.value)
+    infobox += '| name = {}\n'.format(item_info['name'])
+    infobox += '| image = {}.png\n'.format(item_info['name'])
+    if item_info['class']:
+        infobox += '| class = {}\n'.format(item_info['class'])
+    if item_info['description']:
+        infobox += '| description = {}\n'.format(item_info['description'])
     infobox += '}}'
     print(infobox)
+
+
+def print_categories_wiki(item_info, recipe):
+    """
+    Prints some categories at the end
+    """
+    print('<noinclude>')
+    print('[[Category:Item]]')
+    print('[[Category:{}]]'.format(item_info['class']))
+    if recipe:
+        print('[[Category:{} Crafted Item]]'.format(recipe.machine.display_name))
+    print('</noinclude>')
 
 
 def print_recipe(args):
@@ -116,7 +170,14 @@ def print_recipe(args):
         print('no item matches "{}"'.format(args.item_name))
         exit(1)
     for item in session.query(Item).filter_by(string_id=item_trans.string_id):
+        item_info = get_item_info(session, item)
         if args.print_infobox:
-            print_infobox_wiki(session, item)
+            print_infobox_wiki(item_info)
+        final_recipe = None
         for recipe in item.recipes:
-            print_recipe_wiki(recipe)
+            if recipe.machine.name == 'FURNACE':
+                print_furnace_recipe_wiki(recipe)
+            else:
+                print_recipe_wiki(recipe)
+            final_recipe = recipe
+        print_categories_wiki(item_info, final_recipe)

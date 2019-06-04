@@ -69,6 +69,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         self._find_and_process_file('english.json', self._load_translation)
         self._find_and_process_file('compileditems.msgpack', self._load_itemlist)
+        self._find_and_process_file('compiledblocks.msgpack', self._load_blocks)
         self._find_and_process_file('recipes.msgpack', self._load_recipes)
 
     def _find_and_process_file(self, target_filename, handler):
@@ -101,6 +102,12 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         for key, item in itemlist.items():
             self._session.add(Item(id=key, name=item['name'], string_id=item['stringID']))
         self._session.commit()
+
+    def _load_blocks(self, filename):
+        """
+        Load the blocks JSON
+        """
+        pass
 
     def _load_recipes(self, filename):
         """
