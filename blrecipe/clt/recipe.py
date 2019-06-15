@@ -2,7 +2,7 @@
 Submodule to handle printing a recipe
 """
 from sys import exit
-from ..storage import Database, Translation, Item, i18n
+from ..storage import Database, Translation, Item, Ingredient, i18n
 
 
 def add_parser(subparser):
@@ -133,7 +133,7 @@ def get_item_info(session, item):
     return item_info
 
 
-def print_infobox_wiki(item_info):
+def _format_infobox_wiki(item_info):
     """
     Prints an infobox for the rexipe item.
     """
@@ -150,11 +150,13 @@ def print_infobox_wiki(item_info):
         infobox += '| mineXP = {}\n'.format(item_info['mine_xp'])
     if item_info['build_xp'] > 0:
         infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
-    if item_info['craft_xp'] > 0:
-        infobox += '| craftXP = {}\n'.format(item_info['craft_xp'])
-    infobox += '}}'
-    print('<noinclude>{{Version|224}}</noinclude>')
-    print(infobox)
+    try:
+        if item_info['craft_xp'] > 0:
+            infobox += '| craftXP = {}\n'.format(item_info['craft_xp'])
+    except KeyError:
+        pass
+    infobox += '}}\n'
+    return infobox
 
 
 def print_categories_wiki(item_info, recipe):
@@ -167,6 +169,25 @@ def print_categories_wiki(item_info, recipe):
     if recipe:
         print('[[Category:{} Crafted Item]]'.format(recipe.machine.display_name))
     print('</noinclude>')
+
+
+def _get_uses(session, item):
+    """
+    Gets a list of items for which the key item is used as a recipe ingredient.
+    """
+    results = session.query(Ingredient).filter_by(item_id=item.id).all()
+    return sorted({use.recipe.item.display_name for use in results})
+
+
+def format_uses_wiki(uses):
+    """
+    Prints the Uses wiki text.
+    """
+    wiki_text = '{{UsedIn|\n'
+    for use in uses:
+        wiki_text += '* {{ItemLink|{}}}\n'.format(use)
+    wiki_text += '}}\n'
+    return wiki_text
 
 
 def print_recipe(args):
@@ -190,6 +211,7 @@ def print_recipe(args):
             recipe_boxes = []
             for item in session.query(Item).filter_by(string_id=it.string_id):
                 item_info = get_item_info(session, item)
+                uses = _get_uses(session, item)
                 final_recipe = None
                 for recipe in item.recipes:
                     if recipe.machine.name == 'FURNACE':
@@ -198,9 +220,13 @@ def print_recipe(args):
                         recipe_boxes.append(format_recipe_wiki(recipe))
                     item_info['craft_xp'] = recipe.experience
                     final_recipe = recipe
+
                 if args.print_infobox:
-                    print_infobox_wiki(item_info)
+                    print('<noinclude>{{Version|224}}</noinclude>')
+                    print(_format_infobox_wiki(item_info))
                 for recipe in recipe_boxes:
                     print(recipe)
+                if len(uses) > 0:
+                    print(format_uses_wiki(uses))
                 if args.print_infobox:
                     print_categories_wiki(item_info, final_recipe)
