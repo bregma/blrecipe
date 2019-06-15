@@ -25,12 +25,12 @@ def _format_time(time):
     return '{:d}m {:d}s'.format(minutes, seconds)
 
 
-def print_recipe_wiki(recipe):
+def format_recipe_wiki(recipe):
     """
     Format the recipe for WIKI
     """
-    print('{{RecipeBox')
-    print('| name = {}'.format(recipe.item.display_name))
+    wiki_text = '{{RecipeBox\n'
+    wiki_text += '| name = {}\n'.format(recipe.item.display_name)
     ingredients = {}
     for ingredient in recipe.ingredients:
         try:
@@ -40,14 +40,14 @@ def print_recipe_wiki(recipe):
 
     icount = 1
     for ingredient in ingredients:
-        print("| ingredient{} = {}".format(icount, ingredient.display_name), end=' ')
+        wiki_text += "| ingredient{} = {}".format(icount, ingredient.display_name)
         sorted_quant = sorted(ingredients[ingredient].items())
         for quantity in sorted_quant:
-            print("| ingredient{} {} = {}".format(icount,
+            wiki_text += "| ingredient{} {} = {}".format(icount,
                                                   quantity[0].name,
-                                                  quantity[1]), end=' ')
+                                                  quantity[1])
         icount = icount + 1
-        print('')
+        wiki_text += '\n'
     spark_row = ''
     wear_row = ''
     time_row = ''
@@ -62,54 +62,56 @@ def print_recipe_wiki(recipe):
                                                  _format_time(quantity.duration))
         produces_row += "| produces {} = {} ".format(quantity.display_name, quantity.produces)
     if len(spark_row) > 0:
-        print(spark_row)
+        wiki_text += spark_row + '\n'
     if len(wear_row) > 0:
-        print(wear_row)
+        wiki_text += wear_row + '\n'
     if len(time_row) > 0:
-        print(time_row)
+        wiki_text += time_row + '\n'
     if len(produces_row) > 0:
-        print(produces_row)
+        wiki_text += produces_row + '\n'
     if recipe.power:
-        print('| power = {}'.format(recipe.power))
+        wiki_text += '| power = {}\n'.format(recipe.power)
     if recipe.attribute:
-        print('| skill = {}'.format(recipe.attribute), end='')
+        wiki_text += '| skill = {}'.format(recipe.attribute)
         if recipe.attribute_level:
-            print('| skill level = {}'.format(recipe.attribute_level), end='')
-        print('')
-    print('| machine = {}'.format(recipe.machine.display_name))
-    print('}}')
+            wiki_text += '| skill level = {}'.format(recipe.attribute_level)
+        wiki_text += '\n'
+    wiki_text += '| machine = {}\n'.format(recipe.machine.display_name)
+    wiki_text += '}}'
+    return wiki_text
 
 
-def print_furnace_recipe_wiki(recipe):
+def format_furnace_recipe_wiki(recipe):
     """
     Format the furnace recipe for WIKI
     """
-    print('{{FurnaceRecipe')
-    print('| name = {}'.format(recipe.item.display_name))
+    wiki_text = '{{FurnaceRecipe\n'
+    wiki_text += '| name = {}\n'.format(recipe.item.display_name)
     icount = 1
     for ingredient in recipe.ingredients:
         if ingredient.quantity.quantity_id == 0:
-            print("| ingredient{} = {}".format(icount, ingredient.display_name), end=' ')
-            print("| ingredient{} required = {}".format(icount, ingredient.amount))
+            wiki_text += "| ingredient{} = {}".format(icount, ingredient.display_name)
+            wiki_text += "| ingredient{} required = {}\n".format(icount, ingredient.amount)
             icount += 1
 
     for quantity in recipe.quantities:
         if quantity.quantity.quantity_id == 0:
             if quantity.wear > 0:
-                print('| wear = {} '.format(quantity.wear))
+                wiki_text += '| wear = {}\n'.format(quantity.wear)
             if quantity.duration > 0:
-                print('| time = {} '.format(_format_time(quantity.duration)))
+                wiki_text += '| time = {}\n'.format(_format_time(quantity.duration))
             if quantity.produces:
-                print('| produces = {} '.format(quantity.produces))
+                wiki_text += '| produces = {}\n'.format(quantity.produces)
     if recipe.heat > 0:
-        print('| heat = {}'.format(recipe.heat))
+        wiki_text += '| heat = {}\n'.format(recipe.heat)
     if recipe.attribute:
-        print('| skill = {}'.format(recipe.attribute), end='')
+        wiki_text += '| skill = {}'.format(recipe.attribute)
         if recipe.attribute_level:
-            print(' | skill level = {}'.format(recipe.attribute_level), end='')
-        print('')
-    print('| machine = {}'.format(recipe.machine.display_name))
-    print('}}')
+            wiki_text += ' | skill level = {}'.format(recipe.attribute_level)
+        wiki_text += '\n'
+    wiki_text += '| machine = {}\n'.format(recipe.machine.display_name)
+    wiki_text += '}}'
+    return wiki_text
 
 
 def get_item_info(session, item):
@@ -148,6 +150,8 @@ def print_infobox_wiki(item_info):
         infobox += '| mineXP = {}\n'.format(item_info['mine_xp'])
     if item_info['build_xp'] > 0:
         infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
+    if item_info['craft_xp'] > 0:
+        infobox += '| craftXP = {}\n'.format(item_info['craft_xp'])
     infobox += '}}'
     print('<noinclude>{{Version|224}}</noinclude>')
     print(infobox)
@@ -183,15 +187,20 @@ def print_recipe(args):
         if args.verbose > 0:
             print('item {} ({})'.format(it.id, it.string_id))
         if it.string_id.startswith('ITEM_TYPE_'):
+            recipe_boxes = []
             for item in session.query(Item).filter_by(string_id=it.string_id):
                 item_info = get_item_info(session, item)
-                if args.print_infobox:
-                    print_infobox_wiki(item_info)
                 final_recipe = None
                 for recipe in item.recipes:
                     if recipe.machine.name == 'FURNACE':
-                        print_furnace_recipe_wiki(recipe)
+                        recipe_boxes.append(format_furnace_recipe_wiki(recipe))
                     else:
-                        print_recipe_wiki(recipe)
+                        recipe_boxes.append(format_recipe_wiki(recipe))
+                    item_info['craft_xp'] = recipe.experience
                     final_recipe = recipe
-                print_categories_wiki(item_info, final_recipe)
+                if args.print_infobox:
+                    print_infobox_wiki(item_info)
+                for recipe in recipe_boxes:
+                    print(recipe)
+                if args.print_infobox:
+                    print_categories_wiki(item_info, final_recipe)
