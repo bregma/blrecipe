@@ -16,6 +16,9 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(32), unique=True, nullable=False)
     string_id = Column(String(64), ForeignKey('Translation.string_id'))
+    build_xp = Column(Integer, nullable=False, default=0)
+    mine_xp = Column(Integer, nullable=False, default=0)
+    prestige = Column(Integer, nullable=False, default=0)
 
     translation = relationship('Translation')
     recipes = relationship('Recipe')

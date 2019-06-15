@@ -125,6 +125,9 @@ def get_item_info(session, item):
 
     description_id = item.string_id + '_DESCRIPTION'
     item_info['description'] = i18n(session, description_id)
+    item_info['prestige'] = item.prestige
+    item_info['mine_xp'] = item.mine_xp
+    item_info['build_xp'] = item.build_xp
     return item_info
 
 
@@ -139,7 +142,14 @@ def print_infobox_wiki(item_info):
         infobox += '| class = {}\n'.format(item_info['class'])
     if item_info['description']:
         infobox += '| description = {}\n'.format(item_info['description'])
+    if item_info['prestige'] > 0:
+        infobox += '| prestige = {}\n'.format(item_info['prestige'])
+    if item_info['mine_xp'] > 0:
+        infobox += '| mineXP = {}\n'.format(item_info['mine_xp'])
+    if item_info['build_xp'] > 0:
+        infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
     infobox += '}}'
+    print('<noinclude>{{Version|224}}</noinclude>')
     print(infobox)
 
 
@@ -165,19 +175,23 @@ def print_recipe(args):
     database = Database()
     session = database.session()
 
-    item_trans = session.query(Translation).filter_by(value=args.item_name).first()
-    if item_trans is None:
+    item_trans = session.query(Translation).filter_by(value=args.item_name).all()
+    if item_trans is None or len(item_trans) == 0:
         print('no item matches "{}"'.format(args.item_name))
         exit(1)
-    for item in session.query(Item).filter_by(string_id=item_trans.string_id):
-        item_info = get_item_info(session, item)
-        if args.print_infobox:
-            print_infobox_wiki(item_info)
-        final_recipe = None
-        for recipe in item.recipes:
-            if recipe.machine.name == 'FURNACE':
-                print_furnace_recipe_wiki(recipe)
-            else:
-                print_recipe_wiki(recipe)
-            final_recipe = recipe
-        print_categories_wiki(item_info, final_recipe)
+    for it in item_trans:
+        if args.verbose > 0:
+            print('item {} ({})'.format(it.id, it.string_id))
+        if it.string_id.startswith('ITEM_TYPE_'):
+            for item in session.query(Item).filter_by(string_id=it.string_id):
+                item_info = get_item_info(session, item)
+                if args.print_infobox:
+                    print_infobox_wiki(item_info)
+                final_recipe = None
+                for recipe in item.recipes:
+                    if recipe.machine.name == 'FURNACE':
+                        print_furnace_recipe_wiki(recipe)
+                    else:
+                        print_recipe_wiki(recipe)
+                    final_recipe = recipe
+                print_categories_wiki(item_info, final_recipe)

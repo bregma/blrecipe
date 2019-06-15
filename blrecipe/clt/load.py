@@ -100,6 +100,8 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         itemlist = unpack(filename)
         for key, item in itemlist.items():
+            if self._args.verbose:
+                print('adding item"{}"'.format(item['name']))
             self._session.add(Item(id=key, name=item['name'], string_id=item['stringID']))
         self._session.commit()
 
@@ -107,7 +109,27 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         Load the blocks JSON
         """
-        pass
+        contents = unpack(filename)
+        blocks = contents['BlockTypesData']
+        for block in blocks:
+            if block is None:
+                continue
+            block_id = block['id']
+            items = self._session.query(Item).filter_by(id=block_id).all()
+            if len(items) == 0:
+                print('no item matches block"{}"'.format(block['stringID']))
+            try:
+                item = items[0]
+                if self._args.verbose:
+                    print('processing block "{}"'.format(item.display_name))
+                item.prestige = block['prestige']
+                item.build_xp = block['buildXP']
+                item.mine_xp = block['mineXP']
+            except IndexError:
+                if self._args.verbose:
+                    print('no item for block id={}'.format(block_id))
+
+        self._session.commit()
 
     def _load_recipes(self, filename):
         """
