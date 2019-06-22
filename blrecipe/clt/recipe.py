@@ -183,9 +183,9 @@ def format_uses_wiki(uses):
     """
     Prints the Uses wiki text.
     """
-    wiki_text = '{{UsedIn|\n'
+    wiki_text = '{{Used In|\n'
     for use in uses:
-        wiki_text += '* {{ItemLink|{}}}\n'.format(use)
+        wiki_text += '* {{{{ItemLink|{}}}}}\n'.format(use)
     wiki_text += '}}\n'
     return wiki_text
 
