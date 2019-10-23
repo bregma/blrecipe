@@ -130,6 +130,7 @@ def get_item_info(session, item):
     item_info['prestige'] = item.prestige
     item_info['mine_xp'] = item.mine_xp
     item_info['build_xp'] = item.build_xp
+    item_info['coin_value'] = item.coin_value
     return item_info
 
 
@@ -148,13 +149,15 @@ def _format_infobox_wiki(item_info):
         infobox += '| prestige = {}\n'.format(item_info['prestige'])
     if item_info['mine_xp'] > 0:
         infobox += '| mineXP = {}\n'.format(item_info['mine_xp'])
-    if item_info['build_xp'] > 0:
-        infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
     try:
         if item_info['craft_xp'] > 0:
             infobox += '| craftXP = {}\n'.format(item_info['craft_xp'])
     except KeyError:
         pass
+    if item_info['build_xp'] > 0:
+        infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
+    if item_info['coin_value'] > 0:
+        infobox += '| coin_value = {}\n'.format(item_info['coin_value'])
     infobox += '}}\n'
     return infobox
 

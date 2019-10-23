@@ -19,6 +19,7 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
     build_xp = Column(Integer, nullable=False, default=0)
     mine_xp = Column(Integer, nullable=False, default=0)
     prestige = Column(Integer, nullable=False, default=0)
+    coin_value = Column(Integer, nullable=False, default=0)
 
     translation = relationship('Translation')
     recipes = relationship('Recipe')
@@ -27,6 +28,7 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
         super().__init__(*args, **kwargs)
         self.name = name
         self.string_id = string_id
+        self.coin_value = kwargs['coin_value']
 
     def __repr__(self):
         return '<Item {} ({})>'.format(self.name, self.display_name)
@@ -36,4 +38,4 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
         """
         Get the (localized) display name of the item.
         """
-        return self.translation.value
+        return self.translation.value if self.translation else "unknown"

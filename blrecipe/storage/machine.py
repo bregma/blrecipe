@@ -42,5 +42,7 @@ def _default_quantities(target, connection, **kw):  # pylint: disable=unused-arg
     session.add(Machine('MIXER', 'GUI_MACHINE_MIXER_TITLE'))
     session.add(Machine('FORGE', 'GUI_MACHINE_FORGE_TITLE'))
     session.add(Machine('FURNACE', 'GUI_MACHINE_FURNACE_TITLE'))
-    session.add(Machine('POWERCORE', 'GUI_MACHINE_POWERCODE_TITLE'))
+    session.add(Machine('POWERCORE', 'GUI_MACHINE_POWERCORE_TITLE'))
+    session.add(Machine('HELIX', 'GUI_MACHINE_HELIX_TITLE'))
+    session.add(Machine('DYE_MAKER', 'GUI_DYE_MAKER_TITLE'))
     session.commit()
