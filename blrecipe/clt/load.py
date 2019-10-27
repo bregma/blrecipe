@@ -102,7 +102,12 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         for key, item in itemlist.items():
             if self._args.verbose:
                 print('adding item"{}"'.format(item['name']))
-            self._session.add(Item(id=key, name=item['name'], string_id=item['stringID'], coin_value=item['coinValue']))
+            itemrec = Item(id=key,
+                           name=item['name'],
+                           string_id=item['stringID'],
+                           coin_value=item['coinValue'],
+                           list_type_id = item['listTypeName'])
+            self._session.add(itemrec);
         self._session.commit()
 
     def _load_blocks(self, filename):

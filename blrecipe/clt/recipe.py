@@ -131,6 +131,7 @@ def get_item_info(session, item):
     item_info['mine_xp'] = item.mine_xp
     item_info['build_xp'] = item.build_xp
     item_info['coin_value'] = item.coin_value
+    item_info['list_type'] = item.list_type
     return item_info
 
 
@@ -158,6 +159,8 @@ def _format_infobox_wiki(item_info):
         infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
     if item_info['coin_value'] > 0:
         infobox += '| coin_value = {}\n'.format(item_info['coin_value'])
+    if item_info['list_type']:
+        infobox += '| list_type = {}\n'.format(item_info['list_type'])
     infobox += '}}\n'
     return infobox
 

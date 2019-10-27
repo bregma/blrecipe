@@ -20,8 +20,11 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
     mine_xp = Column(Integer, nullable=False, default=0)
     prestige = Column(Integer, nullable=False, default=0)
     coin_value = Column(Integer, nullable=False, default=0)
+    list_type_id = Column(String(64), ForeignKey('Translation.string_id'))
+    max_stack_size = Column(Integer, nullable=False, default=0)
 
-    translation = relationship('Translation')
+    translation = relationship('Translation', foreign_keys=[string_id])
+    list_type_tr = relationship('Translation', foreign_keys=[list_type_id])
     recipes = relationship('Recipe')
 
     def __init__(self, name, string_id, *args, **kwargs):
@@ -39,3 +42,11 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
         Get the (localized) display name of the item.
         """
         return self.translation.value if self.translation else "unknown"
+
+    @property
+    def list_type(self):
+        """
+        Get the localized list type name (if any).
+        """
+        return self.list_type_tr.value if self.list_type_tr else None
+
