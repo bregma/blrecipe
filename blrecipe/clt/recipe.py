@@ -225,7 +225,7 @@ def print_recipe(args):
                     final_recipe = recipe
 
                 if args.print_infobox:
-                    print('<noinclude>{{Version|224}}</noinclude>')
+                    print('<noinclude>{{Version|233}}</noinclude>')
                     print(_format_infobox_wiki(item_info))
                 for recipe in recipe_boxes:
                     print(recipe)
