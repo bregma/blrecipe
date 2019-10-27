@@ -121,17 +121,14 @@ def get_item_info(session, item):
     item_info = {}
 
     item_info['name'] = item.display_name
-
-    class_id = item.string_id + '_SUBTITLE'
-    item_info['class'] = i18n(session, class_id)
-
-    description_id = item.string_id + '_DESCRIPTION'
-    item_info['description'] = i18n(session, description_id)
+    item_info['class'] = item.subtitle
+    item_info['description'] = item.description
     item_info['prestige'] = item.prestige
     item_info['mine_xp'] = item.mine_xp
     item_info['build_xp'] = item.build_xp
     item_info['coin_value'] = item.coin_value
     item_info['list_type'] = item.list_type
+    item_info['uses'] = item.uses
     return item_info
 
 
@@ -177,23 +174,18 @@ def print_categories_wiki(item_info, recipe):
     print('</noinclude>')
 
 
-def _get_uses(session, item):
+def _format_uses_wiki(item_info):
     """
-    Gets a list of items for which the key item is used as a recipe ingredient.
+    Print the Used In wiki text.
     """
-    results = session.query(Ingredient).filter_by(item_id=item.id).all()
-    return sorted({use.recipe.item.display_name for use in results})
-
-
-def format_uses_wiki(uses):
-    """
-    Prints the Uses wiki text.
-    """
-    wiki_text = '{{Used In|\n'
-    for use in uses:
-        wiki_text += '* {{{{ItemLink|{}}}}}\n'.format(use)
-    wiki_text += '}}\n'
-    return wiki_text
+    wikitext = ''
+    uses = item_info['uses']
+    if len(uses) > 0:
+        wikitext = '{{Used In|\n'
+        for use in uses:
+            wikitext += '* {{{{ItemLink|{}}}}}\n'.format(use)
+        wikitext += '}}\n'
+    return wikitext
 
 
 def print_recipe(args):
@@ -215,9 +207,10 @@ def print_recipe(args):
             print('item {} ({})'.format(it.id, it.string_id))
         if it.string_id.startswith('ITEM_TYPE_'):
             recipe_boxes = []
-            for item in session.query(Item).filter_by(string_id=it.string_id):
+            items = session.query(Item).filter_by(string_id=it.string_id)
+            if items:
+                item = min(items, key=lambda i: len(i.name))
                 item_info = get_item_info(session, item)
-                uses = _get_uses(session, item)
                 final_recipe = None
                 for recipe in item.recipes:
                     if recipe.machine.name == 'FURNACE':
@@ -229,10 +222,10 @@ def print_recipe(args):
 
                 if args.print_infobox:
                     print('<noinclude>{{Version|233}}</noinclude>')
-                    print(_format_infobox_wiki(item_info))
+                    print(_format_infobox_wiki(item_info), end='')
                 for recipe in recipe_boxes:
                     print(recipe)
-                if len(uses) > 0:
-                    print(format_uses_wiki(uses))
+                if args.print_infobox:
+                    print(_format_uses_wiki(item_info), end='')
                 if args.print_infobox:
                     print_categories_wiki(item_info, final_recipe)
