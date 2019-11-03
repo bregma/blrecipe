@@ -29,12 +29,12 @@ class Machine(BaseObject):  # pylint: disable=too-few-public-methods
     @property
     def display_name(self):
         """Get the (localized) display name of the machine."""
-        return self.translation.value
+        return self.translation.value if self.translation else self.string_id
 
 @event.listens_for(Machine.__table__, 'after_create')
 def _default_quantities(target, connection, **kw):  # pylint: disable=unused-argument
     session = Session(bind=connection)
-    session.add(Machine('CRAFTING_TABLE', 'CRAFTING_TABLE'))
+    session.add(Machine('CRAFTING_TABLE', 'GUI_CRAFTING_TABLE_TITLE'))
     session.add(Machine('WORKBENCH', 'GUI_MACHINE_WORKBENCH_TITLE'))
     session.add(Machine('EXTRACTOR', 'GUI_MACHINE_EXTRACTOR_TITLE'))
     session.add(Machine('COMPACTOR', 'GUI_MACHINE_COMPACTOR_TITLE'))

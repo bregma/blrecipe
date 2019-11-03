@@ -23,4 +23,7 @@ class Translation(BaseObject):  # pylint: disable=too-few-public-methods
         self.value = string_id if value is None else value
 
 def i18n(session, string_id):
+    """
+    Return the internationalized translation of a key string
+    """
     return session.query(Translation).filter_by(string_id=string_id).first().value

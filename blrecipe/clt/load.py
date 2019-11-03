@@ -5,6 +5,7 @@ import json
 import os
 import msgpack
 from ..storage import Database, Translation, Item, Quantity
+from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
 from ..storage import Recipe, RecipeQuantity, Machine, Ingredient
 
 
@@ -68,6 +69,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         Performs the actual load of various game files to the database.
         """
         self._find_and_process_file('english.json', self._load_translation)
+        self._find_and_process_file('attributes.msgpack', self._load_attributes)
         self._find_and_process_file('compileditems.msgpack', self._load_itemlist)
         self._find_and_process_file('compiledblocks.msgpack', self._load_blocks)
         self._find_and_process_file('recipes.msgpack', self._load_recipes)
@@ -94,6 +96,72 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                     self._session.add(Translation(string_id=key, value=value, lang='en'))
         self._session.commit()
 
+    def _load_attributes(self, filename):
+        """
+        Translate and load the attributes msgpack
+        """
+        attributes = unpack(filename)
+        self._load_attr_constant(attributes['constants'])
+        self._load_attr_modifier(attributes['modifiers'])
+        self._load_attr_bundle(attributes['bundles'])
+        self._load_attr_archetype(attributes['archetypes'])
+
+    def _load_attr_constant(self, constants):
+        """
+        Load the attribute msgpack constants section
+        """
+        for name, value in constants.items():
+            if self._args.verbose:
+                print('processing constant "{}"'.format(name))
+            self._session.add(AttrConstant(name=name, value=value))
+        self._session.commit()
+
+    def _load_attr_modifier(self, modifiers):
+        """
+        Load the attribute msgpack modifiers section
+        """
+        for name, value in modifiers.items():
+            if self._args.verbose:
+                print('processing modifier "{}"'.format(name))
+            self._session.add(AttrModifier(name=name, **value))
+        self._session.commit()
+
+    def _load_attr_bundle(self, bundles):
+        """
+        Load the attribute msgpack bundles section
+        """
+        for name, attrs in bundles.items():
+            if self._args.verbose:
+                print('processing bundle "{}"'.format(name))
+            self._session.add(AttrBundle(name=name, **attrs))
+        for name, attrs in bundles.items():
+            bundle = self._session.query(AttrBundle).filter_by(name=name).first()
+            if 'bundles' in attrs:
+                for sub in attrs['bundles']:
+                    if self._args.verbose:
+                        print('processing bundle group "{}" for {}'.format(sub, bundle.name))
+                    subbundle = self._session.query(AttrBundle).filter_by(name=sub).first()
+                    bundle.bundleGroup.append(AttrBundleGroup(bundle_id=bundle.id,
+                                                              subbundle_id=subbundle.id))
+            if 'modifiers' in attrs:
+                for mod in attrs['modifiers']:
+                    if self._args.verbose:
+                        print('processing modifier "{}" for {}'.format(mod, bundle.name))
+                    modifier = self._session.query(AttrModifier).filter_by(name=mod).first()
+                    bundle.modifier = modifier
+        self._session.commit()
+
+    def _load_attr_archetype(self, archetypes):
+        """
+        Load the attribute msgpack archetypes section
+        """
+        for target, arches in archetypes.items():
+            if self._args.verbose:
+                print('processing archetype "{}"'.format(target))
+            for name, attrs in arches['attributes'].items():
+                self._session.add(AttrArchetype(target=target, name=name, **attrs))
+        self._session.commit()
+
     def _load_itemlist(self, filename):
         """
         Load the compiled items JSON
@@ -106,8 +174,8 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                            name=item['name'],
                            string_id=item['stringID'],
                            coin_value=item['coinValue'],
-                           list_type_id = item['listTypeName'])
-            self._session.add(itemrec);
+                           list_type_id=item['listTypeName'])
+            self._session.add(itemrec)
         self._session.commit()
 
     def _load_blocks(self, filename):
@@ -140,9 +208,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         Load the recipes JSON
         """
-        contents = unpack(filename)
-        recipes = contents['recipes']
-        for recipe in recipes:
+        for recipe in unpack(filename)['recipes']:
             output_item = recipe['outputItem']
             item = self._session.query(Item).filter_by(id=output_item).first()
             if item is None:
@@ -158,9 +224,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             item.recipes.append(new_recipe)
 
             for i, amount in enumerate(recipe['outputQuantity']):
-                rquant = RecipeQuantity()
-                rquant.recipe = new_recipe
-                rquant.quantity = self.quantities[i]
+                rquant = RecipeQuantity(new_recipe, self.quantities[i])
                 rquant.spark = recipe['spark'][i]
                 rquant.wear = recipe['wear'][i]
                 rquant.duration = recipe['duration'][i]
@@ -188,12 +252,9 @@ class Loader(object):  # pylint: disable=too-few-public-methods
 
             try:
                 prereqs = recipe['prerequisites']
-                if prereqs:
-                    for req in prereqs:
-                        skill = req['attribute'].rpartition(' Level')[0]
-                        level = req['level']
-                        new_recipe.attribute = skill
-                        new_recipe.attribute_level = level
+                for req in prereqs:
+                    new_recipe.attribute = req['attribute'].rpartition(' Level')[0]
+                    new_recipe.attribute_level = req['level']
             except KeyError:
                 if self._args.verbose:
                     print('  item {} missing prereqs'.format(item.name))

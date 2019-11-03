@@ -2,7 +2,7 @@
 Submodule to handle printing a recipe
 """
 from sys import exit
-from ..storage import Database, Translation, Item, Ingredient, i18n
+from ..storage import Database, Translation, Item
 
 
 def add_parser(subparser):
@@ -25,6 +25,36 @@ def _format_time(time):
     return '{:d}m {:d}s'.format(minutes, seconds)
 
 
+def _spark_column_wikitext(quantity):
+    """
+    Return a spark column in wikitext format
+    """
+    if quantity.spark:
+        return "| spark {} = {} ".format(quantity.display_name,
+                                         quantity.spark)
+    return ''
+
+
+def _wear_column_wikitext(quantity):
+    """
+    Return a wear column in wikitext format
+    """
+    if quantity.wear:
+        return "| wear {} = {} ".format(quantity.display_name,
+                                        quantity.wear)
+    return ''
+
+
+def _time_column_wikitext(quantity):
+    """
+    Return a time column in wikitext format
+    """
+    if quantity.duration:
+        return "| time {} = {} ".format(quantity.display_name,
+                                        _format_time(quantity.duration))
+    return ''
+
+
 def format_recipe_wiki(recipe):
     """
     Format the recipe for WIKI
@@ -43,9 +73,9 @@ def format_recipe_wiki(recipe):
         wiki_text += "| ingredient{} = {}".format(icount, ingredient.display_name)
         sorted_quant = sorted(ingredients[ingredient].items())
         for quantity in sorted_quant:
-            wiki_text += "| ingredient{} {} = {}".format(icount,
-                                                  quantity[0].name,
-                                                  quantity[1])
+            wiki_text += " | ingredient{} {} = {}".format(icount,
+                                                          quantity[0].name,
+                                                          quantity[1])
         icount = icount + 1
         wiki_text += '\n'
     spark_row = ''
@@ -54,29 +84,24 @@ def format_recipe_wiki(recipe):
     produces_row = ''
     for quantity in recipe.quantities:
         if quantity.spark:
-            spark_row += "| spark {} = {} ".format(quantity.display_name, quantity.spark)
+            spark_row += _spark_column_wikitext(quantity)
         if quantity.wear:
-            wear_row += "| wear {} = {} ".format(quantity.display_name, quantity.wear)
+            wear_row += _wear_column_wikitext(quantity)
         if quantity.duration:
-            time_row += "| time {} = {} ".format(quantity.display_name,
-                                                 _format_time(quantity.duration))
+            time_row += _time_column_wikitext(quantity)
         produces_row += "| produces {} = {} ".format(quantity.display_name, quantity.produces)
-    if len(spark_row) > 0:
-        wiki_text += spark_row + '\n'
-    if len(wear_row) > 0:
-        wiki_text += wear_row + '\n'
-    if len(time_row) > 0:
-        wiki_text += time_row + '\n'
-    if len(produces_row) > 0:
-        wiki_text += produces_row + '\n'
-    if recipe.power:
-        wiki_text += '| power = {}\n'.format(recipe.power)
+    wiki_text += '{}\n'.format(spark_row) if len(spark_row) > 0 else ''
+    wiki_text += '{}\n'.format(wear_row) if len(wear_row) > 0 else ''
+    wiki_text += '{}\n'.format(time_row) if len(time_row) > 0 else ''
+    wiki_text += '{}\n'.format(produces_row) if len(produces_row) > 0 else ''
+    wiki_text += '| power = {}\n'.format(recipe.power) if recipe.power else ''
     if recipe.attribute:
         wiki_text += '| skill = {}'.format(recipe.attribute)
         if recipe.attribute_level:
-            wiki_text += '| skill level = {}'.format(recipe.attribute_level)
+            wiki_text += ' | skill level = {}'.format(recipe.attribute_level)
         wiki_text += '\n'
-    wiki_text += '| machine = {}\n'.format(recipe.machine.display_name)
+    if recipe.machine:
+        wiki_text += '| machine = {}\n'.format(recipe.machine.display_name)
     wiki_text += '}}'
     return wiki_text
 
@@ -114,7 +139,7 @@ def format_furnace_recipe_wiki(recipe):
     return wiki_text
 
 
-def get_item_info(session, item):
+def get_item_info(item):
     """
     Gets translated information related to the item.
     """
@@ -169,7 +194,7 @@ def print_categories_wiki(item_info, recipe):
     print('<noinclude>')
     print('[[Category:Item]]')
     print('[[Category:{}]]'.format(item_info['class']))
-    if recipe:
+    if recipe and recipe.machine:
         print('[[Category:{} Crafted Item]]'.format(recipe.machine.display_name))
     print('</noinclude>')
 
@@ -202,18 +227,18 @@ def print_recipe(args):
     if item_trans is None or len(item_trans) == 0:
         print('no item matches "{}"'.format(args.item_name))
         exit(1)
-    for it in item_trans:
+    for itm in item_trans:
         if args.verbose > 0:
-            print('item {} ({})'.format(it.id, it.string_id))
-        if it.string_id.startswith('ITEM_TYPE_'):
+            print('item {} ({})'.format(itm.id, itm.string_id))
+        if itm.string_id.startswith('ITEM_TYPE_'):
             recipe_boxes = []
-            items = session.query(Item).filter_by(string_id=it.string_id)
+            items = session.query(Item).filter_by(string_id=itm.string_id)
             if items:
                 item = min(items, key=lambda i: len(i.name))
-                item_info = get_item_info(session, item)
+                item_info = get_item_info(item)
                 final_recipe = None
                 for recipe in item.recipes:
-                    if recipe.machine.name == 'FURNACE':
+                    if recipe.machine and recipe.machine.name == 'FURNACE':
                         recipe_boxes.append(format_furnace_recipe_wiki(recipe))
                     else:
                         recipe_boxes.append(format_recipe_wiki(recipe))
@@ -227,5 +252,4 @@ def print_recipe(args):
                     print(recipe)
                 if args.print_infobox:
                     print(_format_uses_wiki(item_info), end='')
-                if args.print_infobox:
                     print_categories_wiki(item_info, final_recipe)

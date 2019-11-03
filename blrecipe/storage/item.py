@@ -33,7 +33,6 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
         super().__init__(*args, **kwargs)
         self.name = name
         self.string_id = string_id
-        self.coin_value = kwargs['coin_value']
 
     def __repr__(self):
         return '<Item {} ({})>'.format(self.name, self.display_name)

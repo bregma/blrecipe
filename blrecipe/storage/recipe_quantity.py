@@ -25,6 +25,11 @@ class RecipeQuantity(BaseObject):  # pylint: disable=too-few-public-methods
     recipe = relationship('Recipe', back_populates='quantities')
     quantity = relationship('Quantity')
 
+    def __init__(self, recipe, quantity, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.recipe = recipe
+        self.quantity = quantity
+
     @property
     def display_name(self):
         """Get the (localized) display name of the ingredient."""
