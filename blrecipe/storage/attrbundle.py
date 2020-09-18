@@ -45,7 +45,7 @@ class AttrBundle(BaseObject):  # pylint: disable=too-few-public-methods
 
     def __init__(self, name, *args, **kwargs):
         attrs = {key: value for key, value in kwargs.items()
-                 if key not in ['bundles', 'modifiers']}
+                 if key not in ['bundles', 'modifiers', 'effect']}
         super().__init__(*args, **attrs)
         self.name = name
 

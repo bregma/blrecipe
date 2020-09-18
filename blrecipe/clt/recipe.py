@@ -233,7 +233,7 @@ def print_recipe(args):
         if itm.string_id.startswith('ITEM_TYPE_'):
             recipe_boxes = []
             items = session.query(Item).filter_by(string_id=itm.string_id)
-            if items:
+            if items.count() > 0:
                 item = min(items, key=lambda i: len(i.name))
                 item_info = get_item_info(item)
                 final_recipe = None
@@ -246,7 +246,7 @@ def print_recipe(args):
                     final_recipe = recipe
 
                 if args.print_infobox:
-                    print('<noinclude>{{Version|233}}</noinclude>')
+                    print('<noinclude>{{Version|244}}</noinclude>')
                     print(_format_infobox_wiki(item_info), end='')
                 for recipe in recipe_boxes:
                     print(recipe)

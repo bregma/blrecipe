@@ -190,7 +190,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             block_id = block['id']
             items = self._session.query(Item).filter_by(id=block_id).all()
             if len(items) == 0:
-                print('no item matches block"{}"'.format(block['stringID']))
+                print('no item matches block id "{}"'.format(block_id))
             try:
                 item = items[0]
                 if self._args.verbose:
