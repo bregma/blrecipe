@@ -192,10 +192,12 @@ def print_categories_wiki(item_info, recipe):
     Prints some categories at the end
     """
     print('<noinclude>')
-    print('[[Category:Item]]')
-    print('[[Category:{}]]'.format(item_info['class']))
+    if item_info['list_type']:
+        print('[[Category:{}]]'.format(item_info['list_type']))
+    if item_info['class']:
+        print('[[Category:{}]]'.format(item_info['class']))
     if recipe and recipe.machine:
-        print('[[Category:{} Crafted Item]]'.format(recipe.machine.display_name))
+        print('[[Category:{} Crafted Items]]'.format(recipe.machine.display_name))
     print('</noinclude>')
 
 
