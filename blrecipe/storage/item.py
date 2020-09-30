@@ -42,7 +42,7 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
         """
         Get the (localized) display name of the item.
         """
-        return self.translation.value if self.translation else "unknown"
+        return self.translation.value if self.translation else "[{}]".format(self.string_id)
 
     @property
     def description_id(self):

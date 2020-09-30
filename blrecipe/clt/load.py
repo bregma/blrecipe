@@ -7,6 +7,7 @@ import msgpack
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
 from ..storage import Recipe, RecipeQuantity, Machine, Ingredient
+from ..storage import ResourceTag
 
 
 def add_parser(subparsers):
@@ -68,10 +69,23 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         Performs the actual load of various game files to the database.
         """
+        if self._args.verbose > 0:
+            print('-=*=- loading translations -=*=-')
         self._find_and_process_file('english.json', self._load_translation)
+        if self._args.verbose > 0:
+            print('-=*=- loading attributes -=*=-')
         self._find_and_process_file('attributes.msgpack', self._load_attributes)
+        if self._args.verbose > 0:
+            print('-=*=- loading resource tags -=*=-')
+        self._find_and_process_file('resourcetags.json', self._load_resourcetags)
+        if self._args.verbose > 0:
+            print('-=*=- loading items -=*=-')
         self._find_and_process_file('compileditems.msgpack', self._load_itemlist)
+        if self._args.verbose > 0:
+            print('-=*=- loading blocks -=*=-')
         self._find_and_process_file('compiledblocks.msgpack', self._load_blocks)
+        if self._args.verbose > 0:
+            print('-=*=- loading recipes -=*=-')
         self._find_and_process_file('recipes.msgpack', self._load_recipes)
 
     def _find_and_process_file(self, target_filename, handler):
@@ -160,6 +174,20 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                 print('processing archetype "{}"'.format(target))
             for name, attrs in arches['attributes'].items():
                 self._session.add(AttrArchetype(target=target, name=name, **attrs))
+        self._session.commit()
+
+    def _load_resourcetags(self, filename):
+        """
+        Load the resource tags file into the resourcetag table
+        """
+        with open(filename) as tfile:
+            rtags = json.loads(tfile.read())
+            for key, value in rtags.items():
+                self._session.add(ResourceTag(string_id=key,
+                                              found_altitude=value['foundAltitude'],
+                                              found_depth=value['foundDepth'],
+                                              found_material=value['foundMaterial'])
+                                 )
         self._session.commit()
 
     def _load_itemlist(self, filename):

@@ -3,12 +3,13 @@ The main command-line tool for maintaining the Boundless Recipes database
 """
 import argparse
 import sys
-from . import load, recipe
+from . import load, recipe, extract
 
 
 COMMANDS = [
     load,
     recipe,
+    extract,
 ]
 
 

@@ -14,6 +14,7 @@ from .quantity import Quantity
 from .recipe import Recipe
 from .recipe_ingredient import Ingredient
 from .recipe_quantity import RecipeQuantity
+from .resourcetag import ResourceTag
 from .translation import Translation, i18n
 
 __all__ = ['Database',
@@ -28,5 +29,6 @@ __all__ = ['Database',
            'Recipe',
            'Ingredient',
            'RecipeQuantity',
+           'ResourceTag',
            'Translation',
            'i18n', ]

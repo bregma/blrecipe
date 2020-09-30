@@ -1,5 +1,6 @@
 blrecipe.db
 *.egg-info
+icons
 __pycache__
 .*.swp
 .vscode

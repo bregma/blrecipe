@@ -2,7 +2,8 @@
 Submodule to handle printing a recipe
 """
 from sys import exit
-from ..storage import Database, Translation, Item
+from ..storage import Database, Translation, Item, ResourceTag
+import string
 
 
 def add_parser(subparser):
@@ -138,8 +139,11 @@ def format_furnace_recipe_wiki(recipe):
     wiki_text += '}}'
     return wiki_text
 
+def make_cap(s):
+    """Splits an underscore-separated string into a capitalized string"""
+    return string.capwords(s.lower().replace('_', ' '))
 
-def get_item_info(item):
+def get_item_info(item, tags):
     """
     Gets translated information related to the item.
     """
@@ -154,6 +158,10 @@ def get_item_info(item):
     item_info['coin_value'] = item.coin_value
     item_info['list_type'] = item.list_type
     item_info['uses'] = item.uses
+    if tags is not None:
+        item_info['found_altitude'] = make_cap(tags.found_altitude)
+        item_info['found_depth'] = make_cap(tags.found_depth)
+        item_info['found_material'] = make_cap(tags.found_material)
     return item_info
 
 
@@ -181,6 +189,15 @@ def _format_infobox_wiki(item_info):
         infobox += '| buildXP = {}\n'.format(item_info['build_xp'])
     if item_info['coin_value'] > 0:
         infobox += '| coin_value = {}\n'.format(item_info['coin_value'])
+    try:
+        if item_info['found_altitude']:
+            infobox += '| found_altitude = {}\n'.format(item_info['found_altitude'])
+        if item_info['found_depth']:
+            infobox += '| found_depth = {}\n'.format(item_info['found_depth'])
+        if item_info['found_material']:
+            infobox += '| found_material = {}\n'.format(item_info['found_material'])
+    except KeyError:
+        pass
     if item_info['list_type']:
         infobox += '| list_type = {}\n'.format(item_info['list_type'])
     infobox += '}}\n'
@@ -231,13 +248,14 @@ def print_recipe(args):
         exit(1)
     for itm in item_trans:
         if args.verbose > 0:
-            print('item {} ({})'.format(itm.id, itm.string_id))
+            print('==> item {} ({})'.format(itm.id, itm.string_id))
         if itm.string_id.startswith('ITEM_TYPE_'):
             recipe_boxes = []
             items = session.query(Item).filter_by(string_id=itm.string_id)
             if items.count() > 0:
                 item = min(items, key=lambda i: len(i.name))
-                item_info = get_item_info(item)
+                tags = session.query(ResourceTag).filter_by(string_id=item.name).first()
+                item_info = get_item_info(item, tags)
                 final_recipe = None
                 for recipe in item.recipes:
                     if recipe.machine and recipe.machine.name == 'FURNACE':
