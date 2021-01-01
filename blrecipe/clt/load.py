@@ -6,9 +6,10 @@ import os
 import msgpack
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
-from ..storage import Recipe, RecipeQuantity, Machine, Ingredient
+from ..storage import Recipe, RecipeQuantity, Language, Machine, Ingredient
 from ..storage import ResourceTag
 from sqlalchemy.exc import IntegrityError
+from .itemcolorstrings import ObjectNames
 
 
 def add_parser(subparsers):
@@ -71,6 +72,9 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         Performs the actual load of various game files to the database.
         """
         if self._args.verbose > 0:
+            print('-=*=- loading itemcolornames -=*=-')
+        self._find_and_process_file('itemcolorstrings.dat', self._load_object_names)
+        if self._args.verbose > 0:
             print('-=*=- loading translations -=*=-')
         self._find_and_process_file('english.json', self._load_translation)
         self._find_and_process_file('english.msgpack', self._load_packed_translation)
@@ -100,6 +104,16 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                     handler(os.path.join(dirname, filename))
                     return
         print('{} not found'.format(target_filename))
+
+    def _load_object_names(self, filename):
+        """
+        Load the object names file... defined the actual item list, too
+        """
+        self._object_names = ObjectNames(filename)
+        for language in self._object_names.languages():
+            if self._args.verbose > 0:
+                print("language: {}".format(language))
+            self._session.add(Language(name=language))
 
     def _load_translation(self, filename):
         """

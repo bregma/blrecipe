@@ -9,6 +9,7 @@ from .attrconstant import AttrConstant
 from .attrmodifier import AttrModifier
 from .attrarchetype import AttrArchetype
 from .item import Item
+from .language import Language
 from .machine import Machine
 from .quantity import Quantity
 from .recipe import Recipe
@@ -24,6 +25,7 @@ __all__ = ['Database',
            'AttrConstant',
            'AttrModifier',
            'Item',
+           'Language',
            'Machine',
            'Quantity',
            'Recipe',
