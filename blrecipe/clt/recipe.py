@@ -3,6 +3,7 @@ Submodule to handle printing a recipe
 """
 from sys import exit
 from ..storage import Database, Translation, Item, ResourceTag
+import re
 import string
 
 
@@ -143,6 +144,19 @@ def make_cap(s):
     """Splits an underscore-separated string into a capitalized string"""
     return string.capwords(s.lower().replace('_', ' '))
 
+
+def _repl_style(matches):
+    if matches.group(2) == '1':
+        return '{{{{Highlight|{}}}}}'.format(matches.group(1))
+    else:
+        return matches.group(0)
+
+_style_regex = re.compile(r'\$\[STYLE\((?P<target>[^,]*),(?P<style>[^)])\)\]')
+
+def _do_styling(text):
+    return re.sub(_style_regex, _repl_style, text)
+
+
 def get_item_info(item, tags):
     """
     Gets translated information related to the item.
@@ -151,7 +165,7 @@ def get_item_info(item, tags):
 
     item_info['name'] = item.display_name
     item_info['class'] = item.subtitle
-    item_info['description'] = item.description
+    item_info['description'] = _do_styling(item.description)
     item_info['prestige'] = item.prestige
     item_info['mine_xp'] = item.mine_xp
     item_info['build_xp'] = item.build_xp
