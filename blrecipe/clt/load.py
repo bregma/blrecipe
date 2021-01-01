@@ -8,6 +8,7 @@ from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
 from ..storage import Recipe, RecipeQuantity, Machine, Ingredient
 from ..storage import ResourceTag
+from sqlalchemy.exc import IntegrityError
 
 
 def add_parser(subparsers):
@@ -72,6 +73,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         if self._args.verbose > 0:
             print('-=*=- loading translations -=*=-')
         self._find_and_process_file('english.json', self._load_translation)
+        self._find_and_process_file('english.msgpack', self._load_packed_translation)
         if self._args.verbose > 0:
             print('-=*=- loading attributes -=*=-')
         self._find_and_process_file('attributes.msgpack', self._load_attributes)
@@ -108,7 +110,22 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             for key, value in translations.items():
                 if isinstance(value, str):
                     self._session.add(Translation(string_id=key, value=value, lang='en'))
-        self._session.commit()
+            self._session.commit()
+
+    def _load_packed_translation(self, filename):
+        """
+        Load the translations file into the translations table
+        """
+        translations = unpack(filename)
+        for key, value in translations.items():
+            if isinstance(value, str):
+                self._session.add(Translation(string_id=key, value=value, lang='en'))
+                try:
+                    self._session.commit()
+                except IntegrityError:
+                    self._session.rollback()
+                    if self._args.verbose > 0:
+                        print('.. duplicate translation key: {}'.format(key))
 
     def _load_attributes(self, filename):
         """
