@@ -9,13 +9,14 @@ from .attrconstant import AttrConstant
 from .attrmodifier import AttrModifier
 from .attrarchetype import AttrArchetype
 from .item import Item
+from .language import Language
 from .machine import Machine
 from .quantity import Quantity
 from .recipe import Recipe
 from .recipe_ingredient import Ingredient
 from .recipe_quantity import RecipeQuantity
 from .resourcetag import ResourceTag
-from .translation import Translation, i18n
+from .translation import Translation, i18n, ItemName, MetalName
 
 __all__ = ['Database',
            'AttrArchetype',
@@ -24,7 +25,10 @@ __all__ = ['Database',
            'AttrConstant',
            'AttrModifier',
            'Item',
+           'ItemName',
+           'Language',
            'Machine',
+           'MetalName',
            'Quantity',
            'Recipe',
            'Ingredient',

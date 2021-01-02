@@ -4,11 +4,12 @@ Submodule to handle new file loads
 import json
 import os
 import msgpack
+from sqlalchemy.exc import IntegrityError
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
-from ..storage import Recipe, RecipeQuantity, Machine, Ingredient
+from ..storage import Recipe, RecipeQuantity, Language, Machine, Ingredient, ItemName, MetalName
 from ..storage import ResourceTag
-from sqlalchemy.exc import IntegrityError
+from .itemcolorstrings import ObjectNames
 
 
 def add_parser(subparsers):
@@ -71,6 +72,9 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         Performs the actual load of various game files to the database.
         """
         if self._args.verbose > 0:
+            print('-=*=- loading itemcolornames -=*=-')
+        self._find_and_process_file('itemcolorstrings.dat', self._load_object_names)
+        if self._args.verbose > 0:
             print('-=*=- loading translations -=*=-')
         self._find_and_process_file('english.json', self._load_translation)
         self._find_and_process_file('english.msgpack', self._load_packed_translation)
@@ -101,6 +105,40 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                     return
         print('{} not found'.format(target_filename))
 
+    def _load_object_names(self, filename):
+        """
+        Load the object names file... defined the actual item list, too
+        """
+        object_names = ObjectNames(filename)
+        for language in object_names.languages():
+            if self._args.verbose > 0:
+                print("language: {}".format(language))
+            self._session.add(Language(name=language))
+
+        english = object_names.translation('english')
+
+        for metal_id in range(object_names.metal_count()):
+            name = english.metal(metal_id)
+            if self._args.verbose > 0:
+                print('metal "{}"'.format(name))
+            self._session.add(MetalName(lang='english',
+                                        metal_id=metal_id,
+                                        name=name))
+
+        for itm in range(object_names.item_count()):
+            item = object_names.item(itm)
+            name = english.item(itm)
+            subtitle = english.subtitle(item[1])
+            if self._args.verbose > 0:
+                print('item {}: "{}" "{}"'.format(item[0], name, subtitle))
+            self._session.add(ItemName(item_id=item[0],
+                                       name=name,
+                                       lang='english',
+                                       subtitle=subtitle))
+
+        self._session.commit()
+
+
     def _load_translation(self, filename):
         """
         Load the translations file into the translations table
@@ -109,7 +147,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             translations = json.loads(tfile.read())
             for key, value in translations.items():
                 if isinstance(value, str):
-                    self._session.add(Translation(string_id=key, value=value, lang='en'))
+                    self._session.add(Translation(string_id=key, value=value, lang='english'))
             self._session.commit()
 
     def _load_packed_translation(self, filename):
@@ -119,7 +157,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         translations = unpack(filename)
         for key, value in translations.items():
             if isinstance(value, str):
-                self._session.add(Translation(string_id=key, value=value, lang='en'))
+                self._session.add(Translation(string_id=key, value=value, lang='english'))
                 try:
                     self._session.commit()
                 except IntegrityError:
@@ -215,8 +253,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         for key, item in itemlist.items():
             if self._args.verbose:
                 print('adding item"{}"'.format(item['name']))
-            itemrec = Item(id=key,
-                           name=item['name'],
+            itemrec = Item(id=item["id"],
                            string_id=item['stringID'],
                            coin_value=item['coinValue'],
                            list_type_id=item['listTypeName'])
@@ -239,7 +276,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             try:
                 item = items[0]
                 if self._args.verbose:
-                    print('processing block "{}"'.format(item.display_name))
+                    print('processing block "{}"'.format(item.name()))
                 item.prestige = block['prestige']
                 item.build_xp = block['buildXP']
                 item.mine_xp = block['mineXP']
@@ -293,7 +330,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                 new_recipe.power = recipe['powerRequired']
             except KeyError:
                 if self._args.verbose:
-                    print('  item {} missing power'.format(item.name))
+                    print('  item {} missing power'.format(item.name()))
 
             try:
                 prereqs = recipe['prerequisites']
@@ -302,7 +339,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                     new_recipe.attribute_level = req['level']
             except KeyError:
                 if self._args.verbose:
-                    print('  item {} missing prereqs'.format(item.name))
+                    print('  item {} missing prereqs'.format(item.name()))
 
             self._session.commit()
             print('{}'.format(new_recipe))

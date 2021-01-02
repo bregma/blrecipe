@@ -1,10 +1,10 @@
 """
 Submodule to handle printing a recipe
 """
-from sys import exit
-from ..storage import Database, Translation, Item, ResourceTag
 import re
 import string
+from sys import exit
+from ..storage import Database, Item, ItemName, ResourceTag
 
 
 def add_parser(subparser):
@@ -62,7 +62,7 @@ def format_recipe_wiki(recipe):
     Format the recipe for WIKI
     """
     wiki_text = '{{RecipeBox\n'
-    wiki_text += '| name = {}\n'.format(recipe.item.display_name)
+    wiki_text += '| name = {}\n'.format(recipe.item.name())
     ingredients = {}
     for ingredient in recipe.ingredients:
         try:
@@ -72,7 +72,7 @@ def format_recipe_wiki(recipe):
 
     icount = 1
     for ingredient in ingredients:
-        wiki_text += "| ingredient{} = {}".format(icount, ingredient.display_name)
+        wiki_text += "| ingredient{} = {}".format(icount, ingredient.name())
         sorted_quant = sorted(ingredients[ingredient].items())
         for quantity in sorted_quant:
             wiki_text += " | ingredient{} {} = {}".format(icount,
@@ -113,11 +113,11 @@ def format_furnace_recipe_wiki(recipe):
     Format the furnace recipe for WIKI
     """
     wiki_text = '{{FurnaceRecipe\n'
-    wiki_text += '| name = {}\n'.format(recipe.item.display_name)
+    wiki_text += '| name = {}\n'.format(recipe.item.name())
     icount = 1
     for ingredient in recipe.ingredients:
         if ingredient.quantity.quantity_id == 0:
-            wiki_text += "| ingredient{} = {}".format(icount, ingredient.display_name)
+            wiki_text += "| ingredient{} = {}".format(icount, ingredient.name())
             wiki_text += "| ingredient{} required = {}\n".format(icount, ingredient.amount)
             icount += 1
 
@@ -140,9 +140,9 @@ def format_furnace_recipe_wiki(recipe):
     wiki_text += '}}'
     return wiki_text
 
-def make_cap(s):
+def make_cap(string):
     """Splits an underscore-separated string into a capitalized string"""
-    return string.capwords(s.lower().replace('_', ' '))
+    return string.capwords(string.lower().replace('_', ' '))
 
 
 def _repl_style(matches):
@@ -151,10 +151,10 @@ def _repl_style(matches):
     else:
         return matches.group(0)
 
-_style_regex = re.compile(r'\$\[STYLE\((?P<target>[^,]*),(?P<style>[^)])\)\]')
+STYLE_REGEX = re.compile(r'\$\[STYLE\((?P<target>[^,]*),(?P<style>[^)])\)\]')
 
 def _do_styling(text):
-    return re.sub(_style_regex, _repl_style, text)
+    return re.sub(STYLE_REGEX, _repl_style, text)
 
 
 def get_item_info(item, tags):
@@ -163,8 +163,8 @@ def get_item_info(item, tags):
     """
     item_info = {}
 
-    item_info['name'] = item.display_name
-    item_info['class'] = item.subtitle
+    item_info['name'] = item.name()
+    item_info['class'] = item.subtitle()
     item_info['description'] = _do_styling(item.description)
     item_info['prestige'] = item.prestige
     item_info['mine_xp'] = item.mine_xp
@@ -256,34 +256,34 @@ def print_recipe(args):
     database = Database()
     session = database.session()
 
-    item_trans = session.query(Translation).filter_by(value=args.item_name).all()
-    if item_trans is None or len(item_trans) == 0:
+    target_item = session.query(ItemName).filter_by(lang="english", name=args.item_name).first()
+    if target_item is None:
         print('no item matches "{}"'.format(args.item_name))
         exit(1)
-    for itm in item_trans:
-        if args.verbose > 0:
-            print('==> item {} ({})'.format(itm.id, itm.string_id))
-        if itm.string_id.startswith('ITEM_TYPE_'):
-            recipe_boxes = []
-            items = session.query(Item).filter_by(string_id=itm.string_id)
-            if items.count() > 0:
-                item = min(items, key=lambda i: len(i.name))
-                tags = session.query(ResourceTag).filter_by(string_id=item.name).first()
-                item_info = get_item_info(item, tags)
-                final_recipe = None
-                for recipe in item.recipes:
-                    if recipe.machine and recipe.machine.name == 'FURNACE':
-                        recipe_boxes.append(format_furnace_recipe_wiki(recipe))
-                    else:
-                        recipe_boxes.append(format_recipe_wiki(recipe))
-                    item_info['craft_xp'] = recipe.experience
-                    final_recipe = recipe
 
-                if args.print_infobox:
-                    print('<noinclude>{{Version|244}}</noinclude>')
-                    print(_format_infobox_wiki(item_info), end='')
-                for recipe in recipe_boxes:
-                    print(recipe)
-                if args.print_infobox:
-                    print(_format_uses_wiki(item_info), end='')
-                    print_categories_wiki(item_info, final_recipe)
+    if args.verbose > 0:
+        print('==> item {} ({})'.format(target_item.item_id, target_item.name))
+
+    recipe_boxes = []
+    items = session.query(Item).filter_by(id=target_item.item_id)
+    if items.count() > 0:
+        item = min(items, key=lambda i: len(i.name()))
+        tags = session.query(ResourceTag).filter_by(string_id=item.string_id).first()
+        item_info = get_item_info(item, tags)
+        final_recipe = None
+        for recipe in item.recipes:
+            if recipe.machine and recipe.machine.name == 'FURNACE':
+                recipe_boxes.append(format_furnace_recipe_wiki(recipe))
+            else:
+                recipe_boxes.append(format_recipe_wiki(recipe))
+            item_info['craft_xp'] = recipe.experience
+            final_recipe = recipe
+
+        if args.print_infobox:
+            print('<noinclude>{{Version|249}}</noinclude>')
+            print(_format_infobox_wiki(item_info), end='')
+        for recipe in recipe_boxes:
+            print(recipe)
+        if args.print_infobox:
+            print(_format_uses_wiki(item_info), end='')
+            print_categories_wiki(item_info, final_recipe)
