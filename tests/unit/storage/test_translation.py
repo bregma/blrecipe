@@ -35,7 +35,7 @@ class TestItemName(TestCase):
         Verify basic constructor
         """
         test_item_id = 1024
-        test_language='inuktitut'
+        test_language = 'inuktitut'
         test_name = 'Groundhog'
 
         item_name = ItemName(item_id=test_item_id, lang=test_language, name=test_name)

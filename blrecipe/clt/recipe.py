@@ -1,10 +1,10 @@
 """
 Submodule to handle printing a recipe
 """
-from sys import exit
-from ..storage import Database, Translation, Item, ItemName, ResourceTag
 import re
 import string
+from sys import exit
+from ..storage import Database, Item, ItemName, ResourceTag
 
 
 def add_parser(subparser):
@@ -140,9 +140,9 @@ def format_furnace_recipe_wiki(recipe):
     wiki_text += '}}'
     return wiki_text
 
-def make_cap(s):
+def make_cap(string):
     """Splits an underscore-separated string into a capitalized string"""
-    return string.capwords(s.lower().replace('_', ' '))
+    return string.capwords(string.lower().replace('_', ' '))
 
 
 def _repl_style(matches):
@@ -151,10 +151,10 @@ def _repl_style(matches):
     else:
         return matches.group(0)
 
-_style_regex = re.compile(r'\$\[STYLE\((?P<target>[^,]*),(?P<style>[^)])\)\]')
+STYLE_REGEX = re.compile(r'\$\[STYLE\((?P<target>[^,]*),(?P<style>[^)])\)\]')
 
 def _do_styling(text):
-    return re.sub(_style_regex, _repl_style, text)
+    return re.sub(STYLE_REGEX, _repl_style, text)
 
 
 def get_item_info(item, tags):

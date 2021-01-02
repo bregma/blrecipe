@@ -38,7 +38,7 @@ class StringTable(object):
             word_count = self._get_bits_at(encoding_offset,
                                            bit_offset + encoding.data_offset,
                                            encoding.data_len)
-            for w in range(word_count):
+            for word_index in range(word_count):
                 bit_offset += (encoding.data_offset + encoding.data_len)
                 encoding = self._decode_varlen(encoding_offset, bit_offset)
                 word_index = self._get_bits_at(encoding_offset,
@@ -47,7 +47,7 @@ class StringTable(object):
                 fmt = '{}s'.format(word_indeces[word_index+1] - word_indeces[word_index])
                 off = words_offset + word_indeces[word_index]
                 word = unpack_from(fmt, self._data, off)[0].decode('iso8859-1')
-                sep = (' ' if w > 0 else '')
+                sep = (' ' if word_index > 0 else '')
                 self._names[i] = sep.join((self._names[i], word))
 
     def _decode_intsize(self, base_offset, bit_length, index):
@@ -169,15 +169,27 @@ class ObjectNames(object):
         return Translation(self._data, self._languages[language], self._name_counts)
 
     def item_count(self):
+        """
+        Get the number of items with translations
+        """
         return self._name_counts["items"]
 
     def item(self, index):
+        """
+        Get an indicated (item_id, subtitle_id) pair
+        """
         return self._items[index]
 
     def languages(self):
+        """
+        Get the number of languages with translations
+        """
         return self._languages
 
     def metal_count(self):
+        """
+        Get the number of metal names with translations
+        """
         return self._name_counts["metals"]
 
 

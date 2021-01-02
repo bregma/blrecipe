@@ -4,11 +4,11 @@ Submodule to handle new file loads
 import json
 import os
 import msgpack
+from sqlalchemy.exc import IntegrityError
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
 from ..storage import Recipe, RecipeQuantity, Language, Machine, Ingredient, ItemName, MetalName
 from ..storage import ResourceTag
-from sqlalchemy.exc import IntegrityError
 from .itemcolorstrings import ObjectNames
 
 
@@ -117,19 +117,24 @@ class Loader(object):  # pylint: disable=too-few-public-methods
 
         english = object_names.translation('english')
 
-        for m in range(object_names.metal_count()):
-            name = english.metal(m)
+        for metal_id in range(object_names.metal_count()):
+            name = english.metal(metal_id)
             if self._args.verbose > 0:
                 print('metal "{}"'.format(name))
-            self._session.add(MetalName(lang='english', metal_id=m, name=name))
+            self._session.add(MetalName(lang='english',
+                                        metal_id=metal_id,
+                                        name=name))
 
-        for it in range(object_names.item_count()):
-            item = object_names.item(it)
-            name = english.item(it)
-            subtitle = english.item(item[1])
+        for itm in range(object_names.item_count()):
+            item = object_names.item(itm)
+            name = english.item(itm)
+            subtitle = english.subtitle(item[1])
             if self._args.verbose > 0:
                 print('item {}: "{}" "{}"'.format(item[0], name, subtitle))
-            self._session.add(ItemName(item_id=item[0], name=name, lang='english', subtitle=subtitle))
+            self._session.add(ItemName(item_id=item[0],
+                                       name=name,
+                                       lang='english',
+                                       subtitle=subtitle))
 
         self._session.commit()
 
@@ -325,7 +330,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                 new_recipe.power = recipe['powerRequired']
             except KeyError:
                 if self._args.verbose:
-                    print('  item {} missing power'.format(item.name))
+                    print('  item {} missing power'.format(item.name()))
 
             try:
                 prereqs = recipe['prerequisites']
@@ -334,7 +339,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                     new_recipe.attribute_level = req['level']
             except KeyError:
                 if self._args.verbose:
-                    print('  item {} missing prereqs'.format(item.name))
+                    print('  item {} missing prereqs'.format(item.name()))
 
             self._session.commit()
             print('{}'.format(new_recipe))
