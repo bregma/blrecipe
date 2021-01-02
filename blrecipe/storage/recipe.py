@@ -41,4 +41,4 @@ class Recipe(BaseObject):  # pylint: disable=too-few-public-methods
         self.handcraftable = handcraftable if handcraftable else 0
 
     def __repr__(self):
-        return '<Recipe "{}">'.format(self.item.display_name)
+        return '<Recipe "{}">'.format(self.item.name(language="english"))

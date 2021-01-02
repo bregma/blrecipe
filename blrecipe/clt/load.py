@@ -248,8 +248,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         for key, item in itemlist.items():
             if self._args.verbose:
                 print('adding item"{}"'.format(item['name']))
-            itemrec = Item(id=key,
-                           name=item['name'],
+            itemrec = Item(id=item["id"],
                            string_id=item['stringID'],
                            coin_value=item['coinValue'],
                            list_type_id=item['listTypeName'])
@@ -272,7 +271,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             try:
                 item = items[0]
                 if self._args.verbose:
-                    print('processing block "{}"'.format(item.display_name))
+                    print('processing block "{}"'.format(item.name()))
                 item.prestige = block['prestige']
                 item.build_xp = block['buildXP']
                 item.mine_xp = block['mineXP']
