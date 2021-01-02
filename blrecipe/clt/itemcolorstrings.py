@@ -177,4 +177,7 @@ class ObjectNames(object):
     def languages(self):
         return self._languages
 
+    def metal_count(self):
+        return self._name_counts["metals"]
+
 

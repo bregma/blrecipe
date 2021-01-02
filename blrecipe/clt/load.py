@@ -6,7 +6,7 @@ import os
 import msgpack
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
-from ..storage import Recipe, RecipeQuantity, Language, Machine, Ingredient
+from ..storage import Recipe, RecipeQuantity, Language, Machine, Ingredient, ItemName, MetalName
 from ..storage import ResourceTag
 from sqlalchemy.exc import IntegrityError
 from .itemcolorstrings import ObjectNames
@@ -109,11 +109,30 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         Load the object names file... defined the actual item list, too
         """
-        self._object_names = ObjectNames(filename)
-        for language in self._object_names.languages():
+        object_names = ObjectNames(filename)
+        for language in object_names.languages():
             if self._args.verbose > 0:
                 print("language: {}".format(language))
             self._session.add(Language(name=language))
+
+        english = object_names.translation('english')
+
+        for m in range(object_names.metal_count()):
+            name = english.metal(m)
+            if self._args.verbose > 0:
+                print('metal "{}"'.format(name))
+            self._session.add(MetalName(lang='english', metal_id=m, name=name))
+
+        for it in range(object_names.item_count()):
+            item = object_names.item(it)
+            name = english.item(it)
+            subtitle = english.item(item[1])
+            if self._args.verbose > 0:
+                print('item {}: "{}" "{}"'.format(item[0], name, subtitle))
+            self._session.add(ItemName(item_id=item[0], name=name, lang='english', subtitle=subtitle))
+
+        self._session.commit()
+
 
     def _load_translation(self, filename):
         """
@@ -123,7 +142,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             translations = json.loads(tfile.read())
             for key, value in translations.items():
                 if isinstance(value, str):
-                    self._session.add(Translation(string_id=key, value=value, lang='en'))
+                    self._session.add(Translation(string_id=key, value=value, lang='english'))
             self._session.commit()
 
     def _load_packed_translation(self, filename):
@@ -133,7 +152,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         translations = unpack(filename)
         for key, value in translations.items():
             if isinstance(value, str):
-                self._session.add(Translation(string_id=key, value=value, lang='en'))
+                self._session.add(Translation(string_id=key, value=value, lang='english'))
                 try:
                     self._session.commit()
                 except IntegrityError:
