@@ -7,7 +7,9 @@ import msgpack
 from sqlalchemy.exc import IntegrityError
 from ..storage import Database, Translation, Item, Quantity
 from ..storage import AttrBundle, AttrBundleGroup, AttrConstant, AttrModifier, AttrArchetype
-from ..storage import Recipe, RecipeQuantity, Language, Machine, Ingredient, ItemName, MetalName
+from ..storage import Language, Machine
+from ..storage import Recipe, RecipeQuantity, Ingredient, IngredientGroup
+from ..storage import ItemName, MetalName
 from ..storage import ResourceTag
 from .itemcolorstrings import ObjectNames
 
@@ -290,11 +292,19 @@ class Loader(object):  # pylint: disable=too-few-public-methods
         """
         Load the recipes JSON
         """
-        for recipe in unpack(filename)['recipes']:
-            output_item = recipe['outputItem']
-            item = self._session.query(Item).filter_by(id=output_item).first()
-            if item is None:
-                print('item "{}" not found'.format(output_item))
+        recipe_data = unpack(filename)
+        for group in recipe_data['groups']:
+            if self._args.verbose:
+                print('adding recipe ingredient group "{}"'.format(group['groupName']))
+            for item_id in group['groupMembers']:
+                self._session.add(IngredientGroup(name=group['groupName'], item_id=item_id))
+        self._session.commit()
+
+        for recipe in recipe_data['recipes']:
+            output_item_id = recipe['outputItem']
+            output_item = self._session.query(Item).filter_by(id=output_item_id).first()
+            if output_item is None:
+                print('item "{}" not found'.format(output_item_id))
                 continue
 
             new_recipe = Recipe(experience=recipe['craftXP'] if 'craftXP' in recipe else None,
@@ -303,7 +313,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                                 handcraftable=_handcraft_from_recipe(recipe))
             if 'machine' in recipe:
                 new_recipe.machine = self.machines[recipe['machine']]
-            item.recipes.append(new_recipe)
+            output_item.recipes.append(new_recipe)
 
             for i, amount in enumerate(recipe['outputQuantity']):
                 rquant = RecipeQuantity(new_recipe, self.quantities[i])
@@ -315,22 +325,31 @@ class Loader(object):  # pylint: disable=too-few-public-methods
             inputs = recipe['inputs']
             if inputs:
                 for recipe_input in inputs:
-                    item = self._session.query(Item)\
-                            .filter_by(id=recipe_input['inputItems'][0])\
-                            .first()
-                    print('  "{}"'.format(item))
-                    for i, amount in enumerate(recipe_input['inputQuantity']):
-                        ringr = Ingredient()
-                        ringr.recipe = new_recipe
-                        ringr.item = item
-                        ringr.quantity = self.quantities[i]
-                        ringr.amount = amount
+                    if 'groupId' in recipe_input:
+                        print('  "{}"'.format(recipe_input['groupId']))
+                        for i, amount in enumerate(recipe_input['inputQuantity']):
+                            ringr = Ingredient()
+                            ringr.recipe = new_recipe
+                            ringr.group_name = recipe_input['groupId']
+                            ringr.quantity = self.quantities[i]
+                            ringr.amount = amount
+                    else:
+                        input_item = self._session.query(Item)\
+                                         .filter_by(id=recipe_input['inputItems'][0])\
+                                         .first()
+                        print('  "{}"'.format(input_item))
+                        for i, amount in enumerate(recipe_input['inputQuantity']):
+                            ringr = Ingredient()
+                            ringr.recipe = new_recipe
+                            ringr.item = input_item
+                            ringr.quantity = self.quantities[i]
+                            ringr.amount = amount
 
             try:
                 new_recipe.power = recipe['powerRequired']
             except KeyError:
                 if self._args.verbose:
-                    print('  item {} missing power'.format(item.name()))
+                    print('  item {} missing power'.format(output_item.name()))
 
             try:
                 prereqs = recipe['prerequisites']
@@ -339,7 +358,7 @@ class Loader(object):  # pylint: disable=too-few-public-methods
                     new_recipe.attribute_level = req['level']
             except KeyError:
                 if self._args.verbose:
-                    print('  item {} missing prereqs'.format(item.name()))
+                    print('  item {} missing prereqs'.format(output_item.name()))
 
             self._session.commit()
             print('{}'.format(new_recipe))

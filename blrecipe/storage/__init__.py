@@ -13,7 +13,7 @@ from .language import Language
 from .machine import Machine
 from .quantity import Quantity
 from .recipe import Recipe
-from .recipe_ingredient import Ingredient
+from .recipe_ingredient import Ingredient, IngredientGroup
 from .recipe_quantity import RecipeQuantity
 from .resourcetag import ResourceTag
 from .translation import Translation, i18n, ItemName, MetalName
@@ -32,6 +32,7 @@ __all__ = ['Database',
            'Quantity',
            'Recipe',
            'Ingredient',
+           'IngredientGroup',
            'RecipeQuantity',
            'ResourceTag',
            'Translation',

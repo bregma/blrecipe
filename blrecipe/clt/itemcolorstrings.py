@@ -38,7 +38,7 @@ class StringTable(object):
             word_count = self._get_bits_at(encoding_offset,
                                            bit_offset + encoding.data_offset,
                                            encoding.data_len)
-            for word_index in range(word_count):
+            for wcount in range(word_count):
                 bit_offset += (encoding.data_offset + encoding.data_len)
                 encoding = self._decode_varlen(encoding_offset, bit_offset)
                 word_index = self._get_bits_at(encoding_offset,
@@ -47,7 +47,7 @@ class StringTable(object):
                 fmt = '{}s'.format(word_indeces[word_index+1] - word_indeces[word_index])
                 off = words_offset + word_indeces[word_index]
                 word = unpack_from(fmt, self._data, off)[0].decode('iso8859-1')
-                sep = (' ' if word_index > 0 else '')
+                sep = (' ' if wcount > 0 else '')
                 self._names[i] = sep.join((self._names[i], word))
 
     def _decode_intsize(self, base_offset, bit_length, index):

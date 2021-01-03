@@ -66,14 +66,14 @@ def format_recipe_wiki(recipe):
     ingredients = {}
     for ingredient in recipe.ingredients:
         try:
-            ingredients[ingredient.item][ingredient.quantity] = ingredient.amount
+            ingredients[ingredient.display_name][ingredient.quantity] = ingredient.amount
         except KeyError:
-            ingredients[ingredient.item] = {ingredient.quantity: ingredient.amount}
+            ingredients[ingredient.display_name] = {ingredient.quantity: ingredient.amount}
 
     icount = 1
-    for ingredient in ingredients:
-        wiki_text += "| ingredient{} = {}".format(icount, ingredient.name())
-        sorted_quant = sorted(ingredients[ingredient].items())
+    for name, quantities in ingredients.items():
+        wiki_text += "| ingredient{} = {}".format(icount, name)
+        sorted_quant = sorted(quantities.items())
         for quantity in sorted_quant:
             wiki_text += " | ingredient{} {} = {}".format(icount,
                                                           quantity[0].name,
@@ -117,7 +117,7 @@ def format_furnace_recipe_wiki(recipe):
     icount = 1
     for ingredient in recipe.ingredients:
         if ingredient.quantity.quantity_id == 0:
-            wiki_text += "| ingredient{} = {}".format(icount, ingredient.name())
+            wiki_text += "| ingredient{} = {}".format(icount, ingredient.display_name)
             wiki_text += "| ingredient{} required = {}\n".format(icount, ingredient.amount)
             icount += 1
 
@@ -140,9 +140,9 @@ def format_furnace_recipe_wiki(recipe):
     wiki_text += '}}'
     return wiki_text
 
-def make_cap(string):
-    """Splits an underscore-separated string into a capitalized string"""
-    return string.capwords(string.lower().replace('_', ' '))
+def make_cap(sstring):
+    """Splits an underscore-separated sstring into a capitalized string"""
+    return string.capwords(sstring.lower().replace('_', ' '))
 
 
 def _repl_style(matches):
