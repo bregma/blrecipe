@@ -71,10 +71,9 @@ def format_recipe_wiki(recipe):
             ingredients[ingredient.display_name] = {ingredient.quantity: ingredient.amount}
 
     icount = 1
-    for name, quantities in ingredients.items():
+    for name, quantities in sorted(ingredients.items()):
         wiki_text += "| ingredient{} = {}".format(icount, name)
-        sorted_quant = sorted(quantities.items())
-        for quantity in sorted_quant:
+        for quantity in sorted(quantities.items()):
             wiki_text += " | ingredient{} {} = {}".format(icount,
                                                           quantity[0].name,
                                                           quantity[1])
