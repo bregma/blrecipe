@@ -2,10 +2,10 @@
 Items
 """
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, or_
 from sqlalchemy.orm import relationship, object_session
 from .database import BaseObject
-from .recipe_ingredient import Ingredient
+from .recipe_ingredient import Ingredient, IngredientGroup
 from .translation import ItemName, Translation
 
 
@@ -87,10 +87,26 @@ class Item(BaseObject):  # pylint: disable=too-few-public-methods
     def uses(self):
         """
         Get the uses (noun, as in 'Used In') for the item.
+
+        An item may be an explicit ingredient in a recipe or as an alternative
+        in a group ingredient.
+
+        There is probably a better way to do this using a single query with a
+        join but this works for now.
         """
-        result = object_session(self).query(Ingredient)\
-                                     .filter_by(item_id=self.id)\
-                                     .all()
+        group_rows = object_session(self).query(IngredientGroup)\
+                                         .filter_by(item_id=self.id)\
+                                         .all()
+        if len(group_rows) > 0:
+            group_names = [group.name for group in group_rows]
+            result = object_session(self).query(Ingredient)\
+                                         .filter(or_(Ingredient.item_id==self.id,
+                                                     Ingredient.group_name.in_(group_names)))\
+                                         .all()
+        else:
+            result = object_session(self).query(Ingredient)\
+                                         .filter(Ingredient.item_id==self.id)\
+                                         .all()
         return sorted({use.recipe.item.name() for use in result})
 
 
